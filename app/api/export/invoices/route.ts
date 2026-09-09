@@ -13,16 +13,16 @@ export async function GET(request: Request) {
   if (!claims?.claims) return new Response('Sign in first.', { status: 401 })
   const { data, error } = await supabase
     .from('invoices')
-    .select('number, date, subtotal, cgst, sgst, igst, total, customers(name, gstin, state_code)')
+    .select('number, date, subtotal, cgst, sgst, igst, total, cancelled_at, customers(name, gstin, state_code)')
     .eq('kind', 'invoice').gte('date', from).lte('date', to)
     .order('date').order('number')
-    .returns<{ number: string; date: string; subtotal: string; cgst: string; sgst: string; igst: string; total: string; customers: { name: string; gstin: string | null; state_code: string } | null }[]>()
+    .returns<{ number: string; date: string; subtotal: string; cgst: string; sgst: string; igst: string; total: string; cancelled_at: string | null; customers: { name: string; gstin: string | null; state_code: string } | null }[]>()
   if (error) return new Response(error.message, { status: 500 })
 
   const q = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`
-  const header = ['Invoice number', 'Date', 'Customer', 'Customer GSTIN', 'Place of supply', 'Taxable value', 'CGST', 'SGST', 'IGST', 'Total']
+  const header = ['Invoice number', 'Date', 'Status', 'Customer', 'Customer GSTIN', 'Place of supply', 'Taxable value', 'CGST', 'SGST', 'IGST', 'Total']
   const rows = data.map((r) => [
-    r.number, r.date, r.customers?.name, r.customers?.gstin ?? '',
+    r.number, r.date, r.cancelled_at ? 'Cancelled' : 'Issued', r.customers?.name, r.customers?.gstin ?? '',
     r.customers ? `${r.customers.state_code} ${STATES[r.customers.state_code] ?? ''}` : '',
     r.subtotal, r.cgst, r.sgst, r.igst, r.total,
   ].map(q).join(','))

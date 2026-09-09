@@ -5,14 +5,14 @@ import { formatDate } from '@/lib/format'
 import { KINDS, type Kind } from '@/lib/documents'
 import { ExportForm } from './export-form'
 
-type Row = { id: string; number: string; date: string; total: string; packages: number | null; customers: { name: string } | null }
+type Row = { id: string; number: string; date: string; total: string; packages: number | null; cancelled_at: string | null; customers: { name: string } | null }
 
 export async function DocumentList({ kind }: { kind: Kind }) {
   const cfg = KINDS[kind]
   const supabase = await createClient()
   const { data: docs, error } = await supabase
     .from('invoices')
-    .select('id, number, date, total, packages, customers(name)')
+    .select('id, number, date, total, packages, cancelled_at, customers(name)')
     .eq('kind', kind)
     .order('created_at', { ascending: false })
     .returns<Row[]>()
@@ -46,8 +46,11 @@ export async function DocumentList({ kind }: { kind: Kind }) {
             </thead>
             <tbody>
               {docs.map((d) => (
-                <tr key={d.id} className="border-t border-line transition hover:bg-tint/60">
-                  <td className="px-4 py-2"><Link href={`${cfg.path}/${d.id}`} className="font-medium text-brand-deep hover:underline">{d.number}</Link></td>
+                <tr key={d.id} className={`border-t border-line transition hover:bg-tint/60 ${d.cancelled_at ? 'text-ink-soft' : ''}`}>
+                  <td className="px-4 py-2">
+                    <Link href={`${cfg.path}/${d.id}`} className="font-medium text-brand-deep hover:underline">{d.number}</Link>
+                    {d.cancelled_at && <span className="ml-2 rounded bg-red-50 px-1.5 py-0.5 text-xs text-red-700">Cancelled</span>}
+                  </td>
                   <td className="px-4 py-2">{formatDate(d.date)}</td>
                   <td className="px-4 py-2">{d.customers?.name}</td>
                   <td className="px-4 py-2 text-right">{cfg.money ? inr(d.total) : d.packages ?? '–'}</td>

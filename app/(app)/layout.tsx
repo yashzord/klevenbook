@@ -15,7 +15,8 @@ export default function AppLayout({ children }: LayoutProps<'/'>) {
           <NavLink href="/challans">Challans</NavLink>
           <NavLink href="/products">Products</NavLink>
           <NavLink href="/customers">Customers</NavLink>
-          <form action={logout} className="ml-auto"><button className="rounded-md px-3 py-1.5 text-ink-soft hover:bg-tint hover:text-ink">Sign out</button></form>
+          <NavLink href="/settings" className="ml-auto">Settings</NavLink>
+          <form action={logout}><button className="rounded-md px-3 py-1.5 text-ink-soft hover:bg-tint hover:text-ink">Sign out</button></form>
         </nav>
       </header>
       <main className="mx-auto max-w-5xl p-4 sm:p-6">{children}</main>

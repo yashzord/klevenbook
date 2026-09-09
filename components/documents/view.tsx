@@ -7,6 +7,7 @@ import { numberToWords, rupeesInWords } from '@/lib/words'
 import { KINDS, type Kind } from '@/lib/documents'
 import type { Customer, Invoice, InvoiceItem, Settings } from '@/lib/types'
 import { PrintButton } from './print-button'
+import { CancelForm } from './cancel-form'
 
 type Doc = Invoice & { customers: Customer; invoice_items: InvoiceItem[]; source: { number: string; kind: Kind } | null }
 
@@ -24,12 +25,19 @@ export function DocumentView({ doc, settings }: { doc: Doc; settings: Settings }
     <>
       <div className="no-print mb-4 flex flex-wrap items-center justify-between gap-3">
         <Link href={cfg.path} className="text-sm text-ink-soft hover:text-ink">← All {cfg.plural.toLowerCase()}</Link>
-        <div className="flex gap-2">
-          {next && <Link href={next.href} className="rounded-md border border-line bg-paper px-4 py-2 font-medium text-brand-deep transition hover:bg-tint">{next.label}</Link>}
+        <div className="flex flex-wrap items-center gap-2">
+          {!doc.cancelled_at && <CancelForm id={doc.id} label={cfg.label.toLowerCase()} />}
+          {next && !doc.cancelled_at && <Link href={next.href} className="rounded-md border border-line bg-paper px-4 py-2 font-medium text-brand-deep transition hover:bg-tint">{next.label}</Link>}
           <PrintButton />
         </div>
       </div>
-      <article className="mx-auto max-w-[210mm] rounded-lg border border-line bg-paper p-8 print:max-w-none print:rounded-none print:border-0 print:p-0">
+      <article className="relative mx-auto max-w-[210mm] rounded-lg border border-line bg-paper p-8 print:max-w-none print:rounded-none print:border-0 print:p-0">
+        {doc.cancelled_at && (
+          <div className="mb-6 rounded-md border-2 border-red-700 px-4 py-3 text-red-700 print:border-red-700">
+            <p className="text-lg font-semibold uppercase tracking-wide">Cancelled</p>
+            <p className="text-sm">{formatDate(doc.cancelled_at.slice(0, 10))}. {doc.cancel_reason}</p>
+          </div>
+        )}
         <header className="flex items-start justify-between gap-6">
           <Image src="/logo.png" alt="" width={110} height={110} priority />
           <div className="text-right text-sm leading-snug">

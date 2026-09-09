@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { STATES } from '@/lib/states'
 import type { Customer } from '@/lib/types'
@@ -10,7 +11,8 @@ export default async function CustomersPage() {
 
   return (
     <>
-      <h1 className="mb-5 text-2xl font-semibold">Customers</h1>
+      <h1 className="mb-1 text-2xl font-semibold">Customers</h1>
+      <p className="mb-5 text-sm text-ink-soft">Who you sell to. The GSTIN decides whether an invoice carries CGST and SGST or IGST. Click a name to edit it.</p>
       <CustomerForm />
       <div className="mt-6 overflow-x-auto rounded-lg border border-line bg-paper">
         <table className="w-full text-sm">
@@ -18,7 +20,7 @@ export default async function CustomersPage() {
           <tbody>
             {data.map((c) => (
               <tr key={c.id} className="border-t border-line hover:bg-tint/60">
-                <td className="px-4 py-2 font-medium">{c.name}</td><td className="px-4 py-2">{c.gstin ?? <span className="text-ink-soft">Unregistered</span>}</td>
+                <td className="px-4 py-2"><Link href={`/customers/${c.id}`} className="font-medium text-brand-deep hover:underline">{c.name}</Link></td><td className="px-4 py-2">{c.gstin ?? <span className="text-ink-soft">Unregistered</span>}</td>
                 <td className="px-4 py-2">{STATES[c.state_code]}</td><td className="px-4 py-2">{c.phone}</td>
               </tr>
             ))}

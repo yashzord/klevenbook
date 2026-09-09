@@ -1,5 +1,6 @@
 'use server'
 import { redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { gstType, lineTotals, splitTax } from '@/lib/gst'
 import { KINDS, SOURCE_KIND, isKind } from '@/lib/documents'
@@ -71,4 +72,16 @@ export async function createDocument(_prev: ActionState, formData: FormData): Pr
   const { data: id, error } = await supabase.rpc('create_invoice', { inv, items })
   if (error) return { error: `Could not save: ${error.message}` }
   redirect(`${cfg.path}/${id}`)
+}
+
+export async function cancelDocument(id: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  const reason = String(formData.get('reason') ?? '').trim().slice(0, 200)
+  if (!reason) return { error: 'Say why, in a few words. It prints on the cancelled document.' }
+  const supabase = await createClient()
+  const { data, error } = await supabase.from('invoices')
+    .update({ cancelled_at: new Date().toISOString(), cancel_reason: reason })
+    .eq('id', id).is('cancelled_at', null).select('kind').single<{ kind: string }>()
+  if (error || !data) return { error: 'Could not cancel. It may already be cancelled.' }
+  revalidatePath('/', 'layout')
+  return { ok: Date.now() }
 }
