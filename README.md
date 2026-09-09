@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# KlevenBook
 
-## Getting Started
+Invoicing for small Indian medical distributors. GST-ready tax invoices, products, customers. Open source (MIT).
 
-First, run the development server:
+Built with Next.js 16, Supabase, Tailwind. Deployed on Vercel at book.klevencare.com.
+
+## Run locally
+
+Needs Node 24 and Docker.
 
 ```bash
+npm install
+npx supabase start          # local Postgres + Auth in Docker
+npx supabase status -o env  # copy API_URL and PUBLISHABLE_KEY into .env.local (see .env.example)
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Create a login (local only):
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+curl -X POST http://127.0.0.1:54321/auth/v1/admin/users \
+  -H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"you@example.com","password":"choose-one","email_confirm":true}'
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Tests
 
-## Learn More
+```bash
+node --test lib/gst.test.ts
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Schema changes
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Migrations live in `supabase/migrations/` and are additive only. Never drop or rename a column in the same release that stops using it.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Apply locally with `npx supabase db reset`. Before applying to production, back it up (free tier has no automatic backups):
 
-## Deploy on Vercel
+```bash
+mkdir -p backups && pg_dump "$SUPABASE_DB_URL" -Fc -f "backups/$(date +%F).dump"
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Keep-alive
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Supabase pauses free projects idle for 7 days. `vercel.json` runs `/api/keepalive` daily. Set `CRON_SECRET` in Vercel.
