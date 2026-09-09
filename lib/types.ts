@@ -18,3 +18,5 @@ export type InvoiceItem = {
   id: string; product_id: string | null; description: string; hsn: string | null; unit: string | null
   qty: string; rate: string; gst_rate: string; amount: string; tax: string; batch: string | null
 }
+export type Payment = { id: string; invoice_id: string; date: string; amount: string; method: 'bank' | 'upi' | 'cash' | 'cheque' | 'other'; reference: string | null }
+export const METHODS: Record<Payment['method'], string> = { bank: 'Bank transfer', upi: 'UPI', cash: 'Cash', cheque: 'Cheque', other: 'Other' }

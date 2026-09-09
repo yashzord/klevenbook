@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { STATES } from '@/lib/states'
+import { sumPaid } from '@/lib/payments'
 
 // GSTR-1 style sheet: one row per invoice. Opens in Excel.
 export async function GET(request: Request) {
@@ -13,18 +14,18 @@ export async function GET(request: Request) {
   if (!claims?.claims) return new Response('Sign in first.', { status: 401 })
   const { data, error } = await supabase
     .from('invoices')
-    .select('number, date, subtotal, cgst, sgst, igst, total, cancelled_at, customers(name, gstin, state_code)')
+    .select('number, date, subtotal, cgst, sgst, igst, total, cancelled_at, customers(name, gstin, state_code), payments(amount)')
     .eq('kind', 'invoice').gte('date', from).lte('date', to)
     .order('date').order('number')
-    .returns<{ number: string; date: string; subtotal: string; cgst: string; sgst: string; igst: string; total: string; cancelled_at: string | null; customers: { name: string; gstin: string | null; state_code: string } | null }[]>()
+    .returns<{ number: string; date: string; subtotal: string; cgst: string; sgst: string; igst: string; total: string; cancelled_at: string | null; customers: { name: string; gstin: string | null; state_code: string } | null; payments: { amount: string }[] | null }[]>()
   if (error) return new Response(error.message, { status: 500 })
 
   const q = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`
-  const header = ['Invoice number', 'Date', 'Status', 'Customer', 'Customer GSTIN', 'Place of supply', 'Taxable value', 'CGST', 'SGST', 'IGST', 'Total']
+  const header = ['Invoice number', 'Date', 'Status', 'Customer', 'Customer GSTIN', 'Place of supply', 'Taxable value', 'CGST', 'SGST', 'IGST', 'Total', 'Received', 'Balance']
   const rows = data.map((r) => [
     r.number, r.date, r.cancelled_at ? 'Cancelled' : 'Issued', r.customers?.name, r.customers?.gstin ?? '',
     r.customers ? `${r.customers.state_code} ${STATES[r.customers.state_code] ?? ''}` : '',
-    r.subtotal, r.cgst, r.sgst, r.igst, r.total,
+    r.subtotal, r.cgst, r.sgst, r.igst, r.total, sumPaid(r.payments), r.cancelled_at ? 0 : Math.round((Number(r.total) - sumPaid(r.payments)) * 100) / 100,
   ].map(q).join(','))
   const csv = [header.map(q).join(','), ...rows].join('\r\n')
   return new Response(csv, {

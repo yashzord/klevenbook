@@ -41,6 +41,9 @@ export function DocumentEditor({ kind, customers, products, sellerState, prefill
     return { qty, ...lineTotals(qty, rate, Number(p.gst_rate)) }
   })
   const filled = lines.filter(Boolean).length
+  const cols = kind === 'challan'
+    ? 'grid-cols-[1fr_80px_36px] sm:grid-cols-[1fr_160px_90px_36px]'
+    : 'grid-cols-[80px_1fr_100px_36px] sm:grid-cols-[1fr_90px_120px_110px_36px]'
   const totalQty = lines.reduce((s, l) => s + (l?.qty ?? 0), 0)
   const subtotal = Math.round(lines.reduce((s, l) => s + (l?.amount ?? 0), 0) * 100) / 100
   const tax = Math.round(lines.reduce((s, l) => s + (l?.tax ?? 0), 0) * 100) / 100
@@ -74,38 +77,30 @@ export function DocumentEditor({ kind, customers, products, sellerState, prefill
           )}
         </div>
 
-        <div className="overflow-x-auto rounded-lg border border-line bg-paper">
-          <table className="w-full text-sm">
-            <thead className="bg-tint text-left text-ink-soft">
-              <tr>
-                <th className="px-3 py-2 font-medium">Product</th>
-                {kind === 'challan' && <th className="w-40 px-3 py-2 font-medium">Batch or serial</th>}
-                <th className="w-24 px-3 py-2 font-medium">Qty</th>
-                {cfg.money && <th className="w-32 px-3 py-2 font-medium">Rate (₹)</th>}
-                {cfg.money && <th className="w-28 px-3 py-2 text-right font-medium">Amount</th>}
-                <th className="w-10" />
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r, i) => (
-                <tr key={r.key} className="border-t border-line">
-                  <td className="p-2">
-                    <select value={r.product_id} onChange={(e) => pickProduct(r.key, e.target.value)} className={inputClass} aria-label={`Product, row ${i + 1}`}>
-                      <option value="">Choose a product</option>
-                      {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                    </select>
-                  </td>
-                  {kind === 'challan' && <td className="p-2"><input value={r.batch} onChange={(e) => update(r.key, { batch: e.target.value })} className={inputClass} aria-label={`Batch, row ${i + 1}`} /></td>}
-                  <td className="p-2"><input type="number" step="any" min="0" value={r.qty} onChange={(e) => update(r.key, { qty: e.target.value })} className={inputClass} aria-label={`Quantity, row ${i + 1}`} /></td>
-                  {cfg.money && <td className="p-2"><input type="number" step="0.01" min="0" value={r.rate} onChange={(e) => update(r.key, { rate: e.target.value, rateTouched: true })} className={inputClass} aria-label={`Rate, row ${i + 1}`} /></td>}
-                  {cfg.money && <td className="p-2 text-right tabular-nums">{lines[i] ? inr(lines[i]!.amount) : <span className="text-ink-soft">–</span>}</td>}
-                  <td className="p-2 text-center">
-                    <button type="button" onClick={() => setRows((rs) => rs.length > 1 ? rs.filter((x) => x.key !== r.key) : rs)} aria-label={`Remove row ${i + 1}`} className="rounded px-2 text-ink-soft hover:bg-red-50 hover:text-red-700">×</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="rounded-lg border border-line bg-paper">
+          <div className={`hidden gap-2 border-b border-line bg-tint px-3 py-2 text-sm text-ink-soft sm:grid ${cols}`}>
+            <span>Product</span>
+            {kind === 'challan' && <span>Batch or serial</span>}
+            <span>Qty</span>
+            {cfg.money && <span>Rate (₹)</span>}
+            {cfg.money && <span className="text-right">Amount</span>}
+            <span />
+          </div>
+          <ul className="divide-y divide-line">
+            {rows.map((r, i) => (
+              <li key={r.key} className={`grid items-center gap-2 p-3 ${cols}`}>
+                <select value={r.product_id} onChange={(e) => pickProduct(r.key, e.target.value)} className={`${inputClass} col-span-full sm:col-span-1`} aria-label={`Product, row ${i + 1}`}>
+                  <option value="">Choose a product</option>
+                  {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+                {kind === 'challan' && <input value={r.batch} onChange={(e) => update(r.key, { batch: e.target.value })} placeholder="Batch or serial" className={inputClass} aria-label={`Batch, row ${i + 1}`} />}
+                <input type="number" step="any" min="0" value={r.qty} onChange={(e) => update(r.key, { qty: e.target.value })} placeholder="Qty" className={inputClass} aria-label={`Quantity, row ${i + 1}`} />
+                {cfg.money && <input type="number" step="0.01" min="0" value={r.rate} onChange={(e) => update(r.key, { rate: e.target.value, rateTouched: true })} placeholder="Rate" className={inputClass} aria-label={`Rate, row ${i + 1}`} />}
+                {cfg.money && <span className="text-right text-sm tabular-nums">{lines[i] ? inr(lines[i]!.amount) : <span className="text-ink-soft">–</span>}</span>}
+                <button type="button" onClick={() => setRows((rs) => rs.length > 1 ? rs.filter((x) => x.key !== r.key) : rs)} aria-label={`Remove row ${i + 1}`} className="justify-self-end rounded px-2 py-1 text-ink-soft hover:bg-red-50 hover:text-red-700">×</button>
+              </li>
+            ))}
+          </ul>
           <div className="border-t border-line p-2">
             <button type="button" onClick={() => { setRows((rs) => [...rs, blank(nextKey)]); setNextKey((k) => k + 1) }} className="rounded-md px-3 py-1.5 text-sm font-medium text-brand hover:bg-tint">+ Add line</button>
           </div>

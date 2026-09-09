@@ -85,3 +85,28 @@ export async function cancelDocument(id: string, _prev: ActionState, formData: F
   revalidatePath('/', 'layout')
   return { ok: Date.now() }
 }
+
+export async function addPayment(invoice_id: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  const amount = Number(formData.get('amount'))
+  const date = String(formData.get('date') ?? '')
+  const method = String(formData.get('method') ?? 'bank')
+  if (!(amount > 0)) return { error: 'Amount must be more than 0.' }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { error: 'Pick a date.' }
+  if (!['bank', 'upi', 'cash', 'cheque', 'other'].includes(method)) return { error: 'Pick how it was paid.' }
+  const supabase = await createClient()
+  const { data: inv } = await supabase.from('invoices').select('kind, cancelled_at').eq('id', invoice_id).single<{ kind: string; cancelled_at: string | null }>()
+  if (!inv || inv.kind !== 'invoice') return { error: 'Payments can only be recorded against an invoice.' }
+  if (inv.cancelled_at) return { error: 'This invoice is cancelled, so nothing is owed on it.' }
+  const { error } = await supabase.from('payments').insert({ invoice_id, amount, date, method, reference: String(formData.get('reference') ?? '').trim().slice(0, 100) || null })
+  if (error) return { error: `Could not save: ${error.message}` }
+  revalidatePath('/', 'layout')
+  return { ok: Date.now() }
+}
+
+export async function deletePayment(id: string): Promise<ActionState> {
+  const supabase = await createClient()
+  const { error } = await supabase.from('payments').delete().eq('id', id)
+  if (error) return { error: `Could not remove: ${error.message}` }
+  revalidatePath('/', 'layout')
+  return { ok: Date.now() }
+}

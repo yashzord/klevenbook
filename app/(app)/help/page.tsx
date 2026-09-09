@@ -18,6 +18,14 @@ const sections = [
     ],
   },
   {
+    title: 'Getting paid',
+    body: [
+      ['Record a payment', 'Open the invoice. Below it, enter the amount received, the date and how it was paid. Part payments are fine; add each one as it comes.'],
+      ['Who owes you', 'Home lists open invoices with the balance due, oldest first. The Invoices list shows Paid, Part paid or Unpaid on every row.'],
+      ['Wrong entry', 'Remove the payment from the invoice page and add it again. Payments have no serial number, so this is safe.'],
+    ],
+  },
+  {
     title: 'Printing and sending',
     body: [
       ['PDF', 'On any document press "Print or save as PDF". In the print window choose "Save as PDF" as the printer.'],
