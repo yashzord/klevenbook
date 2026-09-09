@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { IconArrowLeft } from '@/components/icons'
 import { inr } from '@/lib/gst'
 import { formatDate } from '@/lib/format'
 import { STATES } from '@/lib/states'
@@ -25,10 +26,10 @@ export function DocumentView({ doc, settings, shareUrl }: { doc: Doc; settings: 
   return (
     <>
       <div className="no-print mb-4 flex flex-wrap items-center justify-between gap-3">
-        {shareUrl ? <Link href={cfg.path} className="text-sm text-ink-soft hover:text-ink">← All {cfg.plural.toLowerCase()}</Link> : <span />}
+        {shareUrl ? <Link href={cfg.path} className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-ink"><IconArrowLeft /> All {cfg.plural.toLowerCase()}</Link> : <span />}
         <div className="flex flex-wrap items-center gap-2">
           {shareUrl && !doc.cancelled_at && <CancelForm id={doc.id} label={cfg.label.toLowerCase()} />}
-          {shareUrl && next && !doc.cancelled_at && <Link href={next.href} className="rounded-md border border-line bg-paper px-4 py-2 font-medium text-brand-deep transition hover:bg-tint">{next.label}</Link>}
+          {shareUrl && next && !doc.cancelled_at && <Link href={next.href} className="inline-flex min-h-11 items-center rounded-md border border-line bg-paper px-4 py-2 font-medium text-brand-deep transition hover:bg-tint">{next.label}</Link>}
           {shareUrl && cfg.party === 'customer' && <ShareButtons url={shareUrl} phone={c.phone} text={`Hello ${c.name}, here is ${cfg.label.toLowerCase()} ${doc.number} from ${settings.business_name}${cfg.money ? ` for ${inr(doc.total)}` : ''}: ${shareUrl}`} />}
           <PrintButton />
         </div>

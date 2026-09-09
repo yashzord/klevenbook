@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { IconArrowLeft } from '@/components/icons'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { STATES } from '@/lib/states'
@@ -48,7 +49,7 @@ export async function PartyEditPage({ table, id }: { table: PartyTable; id: stri
   if (!party) notFound()
   return (
     <>
-      <Link href={c.path} className="text-sm text-ink-soft hover:text-ink">← All {c.title.toLowerCase()}</Link>
+      <Link href={c.path} className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-ink"><IconArrowLeft /> All {c.title.toLowerCase()}</Link>
       <h1 className="mb-1 mt-2 text-2xl font-semibold">{party.name}</h1>
       <p className="mb-5 text-sm text-ink-soft">Changes show on new documents. Documents already made keep the old details.</p>
       <PartyForm table={table} party={party} />

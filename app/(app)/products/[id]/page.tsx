@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { IconArrowLeft } from '@/components/icons'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import type { Product } from '@/lib/types'
@@ -13,7 +14,7 @@ export default async function EditProductPage({ params }: PageProps<'/products/[
   if (!product) notFound()
   return (
     <>
-      <Link href="/products" className="text-sm text-ink-soft hover:text-ink">← All products</Link>
+      <Link href="/products" className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-ink"><IconArrowLeft /> All products</Link>
       <h1 className="mb-1 mt-2 text-2xl font-semibold">{product.name}</h1>
       <p className="mb-5 text-sm text-ink-soft">Changes apply to new documents only. Documents already made keep the old price.</p>
       <ProductForm product={product} />

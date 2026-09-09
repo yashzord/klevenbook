@@ -1,13 +1,15 @@
 @import "tailwindcss";
 
-/* Brand tokens sampled from the Kleven Care logo. */
+/* Brand tokens sampled from the Kleven Care logo. Buttons and links use darker cousins that pass WCAG AA (4.5:1) with white. */
 @theme {
   --color-ink: #0f2a52;        /* navy wordmark */
   --color-ink-soft: #4a5b74;
-  --color-brand: #2681b9;      /* logo blue */
+  --color-brand: #1f73a8;      /* links: logo blue darkened to 5.2:1 on white */
   --color-brand-deep: #0f4787;
-  --color-leaf: #43ba66;       /* logo green */
-  --color-leaf-deep: #2f9a52;
+  --color-leaf: #268043;       /* primary buttons: 4.9:1 with white text */
+  --color-leaf-deep: #1f7039;  /* hover, and green text on white at 6.1:1 */
+  --color-leaf-bright: #43ba66; /* the logo green itself, decorative only */
+  --color-whatsapp: #25d366;   /* official WhatsApp green, used with dark text */
   --color-paper: #ffffff;
   --color-tint: #eef4fa;       /* table heads, quiet fills */
   --color-line: #d6e0ec;
@@ -20,9 +22,19 @@ body {
   font-feature-settings: "tnum" 1; /* tabular numerals: money columns line up */
 }
 
+/* Tailwind 4 no longer gives buttons a pointer. */
+button, summary, [role="button"] { cursor: pointer; }
+button:disabled { cursor: wait; }
+
 :focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
 
-.rule-brand { height: 4px; background: linear-gradient(90deg, var(--color-brand-deep), var(--color-brand) 45%, var(--color-leaf)); }
+.rule-brand { height: 4px; background: linear-gradient(90deg, var(--color-brand-deep), var(--color-brand) 45%, var(--color-leaf-bright)); }
+
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
 
 @media print {
   @page { size: A4; margin: 14mm; }
@@ -30,5 +42,3 @@ body {
   body { background: white; }
   .rule-brand { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
-
-@keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }

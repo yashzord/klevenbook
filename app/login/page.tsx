@@ -5,7 +5,7 @@ export default function LoginPage() {
   return (
     <main className="grid min-h-screen lg:grid-cols-[5fr_4fr]">
       <section className="relative hidden overflow-hidden bg-ink text-white lg:flex lg:flex-col lg:justify-between lg:p-12">
-        <div className="absolute inset-0 bg-[radial-gradient(60%_60%_at_20%_10%,#0f4787_0%,transparent_60%),radial-gradient(50%_50%_at_90%_90%,#43ba66_0%,transparent_55%)] opacity-90" />
+        <div className="absolute inset-0 bg-[radial-gradient(60%_60%_at_20%_10%,var(--color-brand-deep)_0%,transparent_60%),radial-gradient(50%_50%_at_90%_90%,var(--color-leaf-bright)_0%,transparent_55%)] opacity-90" />
         <div className="relative flex items-center gap-3 text-lg font-semibold">
           <Image src="/icon.png" alt="" width={36} height={36} className="rounded-md bg-white p-0.5" /> KlevenBook
         </div>

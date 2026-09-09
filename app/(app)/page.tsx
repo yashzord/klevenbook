@@ -4,6 +4,7 @@ import { inr } from '@/lib/gst'
 import { formatDate } from '@/lib/format'
 import { KINDS, type Kind } from '@/lib/documents'
 import { sumPaid } from '@/lib/payments'
+import { IconCheck } from '@/components/icons'
 
 type Owed = { id: string; number: string; date: string; total: string; customers: { name: string } | null; vendors: { name: string } | null; payments: { amount: string }[] | null }
 type Recent = { id: string; kind: Kind; number: string; date: string; total: string; cancelled_at: string | null; customers: { name: string } | null; vendors: { name: string } | null }
@@ -47,7 +48,7 @@ export default async function HomePage() {
           <ol className="divide-y divide-line">
             {steps.map((s, i) => (
               <li key={s.href} className={`flex items-start gap-4 px-4 py-3 ${s.done ? 'text-ink-soft' : ''}`}>
-                <span aria-hidden className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${s.done ? 'bg-leaf text-white' : s === firstOpen ? 'bg-brand text-white' : 'border border-line'}`}>{s.done ? '✓' : i + 1}</span>
+                <span aria-hidden className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${s.done ? 'bg-leaf text-white' : s === firstOpen ? 'bg-brand text-white' : 'border border-line'}`}>{s.done ? <IconCheck /> : i + 1}</span>
                 <div className="flex-1">
                   <p className={s.done ? 'line-through' : 'font-medium'}>{s.title}</p>
                   <p className="text-sm text-ink-soft">{s.why}</p>

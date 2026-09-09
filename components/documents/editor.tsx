@@ -5,6 +5,7 @@ import { gstType, inr, lineTotals, splitTax } from '@/lib/gst'
 import { KINDS, type Kind } from '@/lib/documents'
 import type { Customer, Product } from '@/lib/types'
 import { createDocument } from './actions'
+import { IconPlus, IconX } from '@/components/icons'
 
 export type Row = { key: number; product_id: string; qty: string; rate: string; batch: string; rateTouched: boolean }
 export type Prefill = { party_id: string; rows: Omit<Row, 'key' | 'rateTouched'>[]; source_id: string; source_number: string; reference: string }
@@ -43,8 +44,8 @@ export function DocumentEditor({ kind, parties, products, sellerState, prefill }
   })
   const filled = lines.filter(Boolean).length
   const cols = kind === 'challan'
-    ? 'grid-cols-[1fr_80px_36px] sm:grid-cols-[1fr_160px_90px_36px]'
-    : 'grid-cols-[80px_1fr_100px_36px] sm:grid-cols-[1fr_90px_120px_110px_36px]'
+    ? 'grid-cols-[1fr_1fr_44px] sm:grid-cols-[1fr_160px_90px_44px]'
+    : 'grid-cols-[1fr_1fr_44px] sm:grid-cols-[1fr_90px_120px_110px_44px]'
   const totalQty = lines.reduce((s, l) => s + (l?.qty ?? 0), 0)
   const subtotal = Math.round(lines.reduce((s, l) => s + (l?.amount ?? 0), 0) * 100) / 100
   const tax = Math.round(lines.reduce((s, l) => s + (l?.tax ?? 0), 0) * 100) / 100
@@ -97,13 +98,13 @@ export function DocumentEditor({ kind, parties, products, sellerState, prefill }
                 {kind === 'challan' && <input value={r.batch} onChange={(e) => update(r.key, { batch: e.target.value })} placeholder="Batch or serial" className={inputClass} aria-label={`Batch, row ${i + 1}`} />}
                 <input type="number" step="any" min="0" value={r.qty} onChange={(e) => update(r.key, { qty: e.target.value })} placeholder="Qty" className={inputClass} aria-label={`Quantity, row ${i + 1}`} />
                 {cfg.money && <input type="number" step="0.01" min="0" value={r.rate} onChange={(e) => update(r.key, { rate: e.target.value, rateTouched: true })} placeholder="Rate" className={inputClass} aria-label={`Rate, row ${i + 1}`} />}
-                {cfg.money && <span className="text-right text-sm tabular-nums">{lines[i] ? inr(lines[i]!.amount) : <span className="text-ink-soft">–</span>}</span>}
-                <button type="button" onClick={() => setRows((rs) => rs.length > 1 ? rs.filter((x) => x.key !== r.key) : rs)} aria-label={`Remove row ${i + 1}`} className="justify-self-end rounded px-2 py-1 text-ink-soft hover:bg-red-50 hover:text-red-700">×</button>
+                {cfg.money && <span className={`order-last col-span-full text-right text-sm tabular-nums sm:order-none sm:col-span-1 ${lines[i] ? '' : 'hidden sm:inline'}`}>{lines[i] ? <><span className="text-ink-soft sm:hidden">Amount </span>{inr(lines[i]!.amount)}</> : <span className="text-ink-soft">–</span>}</span>}
+                <button type="button" onClick={() => setRows((rs) => rs.length > 1 ? rs.filter((x) => x.key !== r.key) : rs)} aria-label={`Remove row ${i + 1}`} className="flex h-11 w-11 items-center justify-center justify-self-end rounded-md text-ink-soft transition hover:bg-red-50 hover:text-red-700"><IconX /></button>
               </li>
             ))}
           </ul>
           <div className="border-t border-line p-2">
-            <button type="button" onClick={() => { setRows((rs) => [...rs, blank(nextKey)]); setNextKey((k) => k + 1) }} className="rounded-md px-3 py-1.5 text-sm font-medium text-brand hover:bg-tint">+ Add line</button>
+            <button type="button" onClick={() => { setRows((rs) => [...rs, blank(nextKey)]); setNextKey((k) => k + 1) }} className="inline-flex min-h-11 items-center gap-1 rounded-md px-3 text-sm font-medium text-brand transition hover:bg-tint"><IconPlus /> Add line</button>
           </div>
         </div>
 

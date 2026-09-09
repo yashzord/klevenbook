@@ -35,7 +35,7 @@ export async function DocumentList({ kind }: { kind: Kind }) {
         </div>
         <div className="flex items-center gap-3">
           {(kind === 'invoice' || kind === 'purchase') && docs.length > 0 && <ExportForm kind={kind} />}
-          <Link href={`${cfg.path}/new`} className="rounded-md bg-leaf px-4 py-2 font-medium text-white transition hover:bg-leaf-deep">New {cfg.label.toLowerCase()}</Link>
+          <Link href={`${cfg.path}/new`} className="inline-flex min-h-11 items-center rounded-md bg-leaf px-4 py-2 font-medium text-white transition hover:bg-leaf-deep">New {cfg.label.toLowerCase()}</Link>
         </div>
       </div>
       {docs.length === 0 ? (
