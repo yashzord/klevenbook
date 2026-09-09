@@ -10,11 +10,11 @@ import { PrintButton } from './print-button'
 import { CancelForm } from './cancel-form'
 import { ShareButtons } from './share-buttons'
 
-type Doc = Invoice & { customers: Customer; invoice_items: InvoiceItem[]; source: { number: string; kind: Kind } | null }
+type Doc = Invoice & { customers: Customer | null; vendors?: Customer | null; invoice_items: InvoiceItem[]; source: { number: string; kind: Kind } | null }
 
 // Layout follows the Kleven Care letterhead and templates. Invoice fields per CGST Rule 46: https://cbic-gst.gov.in/cgst-rules.html
 export function DocumentView({ doc, settings, shareUrl }: { doc: Doc; settings: Settings; shareUrl?: string }) {
-  const kind = doc.kind, cfg = KINDS[kind], c = doc.customers
+  const kind = doc.kind, cfg = KINDS[kind], c = (doc.customers ?? doc.vendors)!
   const intra = doc.gst_type === 'cgst_sgst'
   const th = 'px-2 py-2 font-medium'
   const td = 'whitespace-nowrap px-2 py-2'
@@ -29,7 +29,7 @@ export function DocumentView({ doc, settings, shareUrl }: { doc: Doc; settings: 
         <div className="flex flex-wrap items-center gap-2">
           {shareUrl && !doc.cancelled_at && <CancelForm id={doc.id} label={cfg.label.toLowerCase()} />}
           {shareUrl && next && !doc.cancelled_at && <Link href={next.href} className="rounded-md border border-line bg-paper px-4 py-2 font-medium text-brand-deep transition hover:bg-tint">{next.label}</Link>}
-          {shareUrl && <ShareButtons url={shareUrl} phone={c.phone} text={`Hello ${c.name}, here is ${cfg.label.toLowerCase()} ${doc.number} from ${settings.business_name}${cfg.money ? ` for ${inr(doc.total)}` : ''}: ${shareUrl}`} />}
+          {shareUrl && cfg.party === 'customer' && <ShareButtons url={shareUrl} phone={c.phone} text={`Hello ${c.name}, here is ${cfg.label.toLowerCase()} ${doc.number} from ${settings.business_name}${cfg.money ? ` for ${inr(doc.total)}` : ''}: ${shareUrl}`} />}
           <PrintButton />
         </div>
       </div>
@@ -58,16 +58,16 @@ export function DocumentView({ doc, settings, shareUrl }: { doc: Doc; settings: 
             <dt className="text-ink-soft">{cfg.label} number</dt><dd className="text-right font-medium">{doc.number}</dd>
             <dt className="text-ink-soft">Date</dt><dd className="text-right">{formatDate(doc.date)}</dd>
             {kind === 'quotation' && doc.valid_until && <><dt className="text-ink-soft">Valid until</dt><dd className="text-right">{formatDate(doc.valid_until)}</dd></>}
-            {doc.reference && <><dt className="text-ink-soft">{kind === 'quotation' ? 'Reference' : 'Customer PO'}</dt><dd className="text-right">{doc.reference}</dd></>}
+            {doc.reference && <><dt className="text-ink-soft">{kind === 'quotation' ? 'Reference' : kind === 'purchase' ? "Vendor's bill no" : 'Customer PO'}</dt><dd className="text-right">{doc.reference}</dd></>}
             {doc.source && <><dt className="text-ink-soft">{doc.source.kind === 'invoice' ? 'Invoice' : 'Quotation'}</dt><dd className="text-right">{doc.source.number}</dd></>}
             {kind === 'challan' && doc.eway_bill && <><dt className="text-ink-soft">E-way bill</dt><dd className="text-right">{doc.eway_bill}</dd></>}
-            {kind !== 'challan' && <><dt className="text-ink-soft">Place of supply</dt><dd className="text-right">{STATES[c.state_code]} ({c.state_code})</dd></>}
+            {kind !== 'challan' && kind !== 'purchase' && <><dt className="text-ink-soft">Place of supply</dt><dd className="text-right">{STATES[c.state_code]} ({c.state_code})</dd></>}
             {kind === 'invoice' && <><dt className="text-ink-soft">Reverse charge</dt><dd className="text-right">No</dd></>}
           </dl>
         </div>
 
         <section className="mt-6 rounded-md bg-tint p-4 text-sm print:border print:border-line print:bg-transparent">
-          <p className="text-ink-soft">{kind === 'challan' ? 'Consignee (ship to)' : kind === 'quotation' ? 'To' : 'Bill to'}</p>
+          <p className="text-ink-soft">{kind === 'challan' ? 'Consignee (ship to)' : kind === 'quotation' ? 'To' : kind === 'purchase' ? 'Bought from' : 'Bill to'}</p>
           <p className="text-base font-semibold">{c.name}</p>
           {c.address && <p className="whitespace-pre-line">{c.address}</p>}
           <p>{c.gstin ? `GSTIN ${c.gstin}` : 'Unregistered'}</p>
@@ -153,10 +153,14 @@ export function DocumentView({ doc, settings, shareUrl }: { doc: Doc; settings: 
             </div>
           )}
           {kind === 'invoice' && <p className="text-ink-soft">Subject to Hyderabad jurisdiction. Thank you for your business.</p>}
-          <div className="text-right">
-            <p>For {settings.business_name}</p>
-            <p className="mt-12 border-t border-ink pt-1 text-ink-soft">Authorised signatory</p>
-          </div>
+          {kind === 'purchase' ? (
+            <p className="text-ink-soft">Internal record of the vendor&apos;s bill {doc.reference}. Keep the original for input tax credit.</p>
+          ) : (
+            <div className="text-right">
+              <p>For {settings.business_name}</p>
+              <p className="mt-12 border-t border-ink pt-1 text-ink-soft">Authorised signatory</p>
+            </div>
+          )}
         </footer>
       </article>
     </>

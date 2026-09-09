@@ -7,36 +7,37 @@ import type { Customer, Product } from '@/lib/types'
 import { createDocument } from './actions'
 
 export type Row = { key: number; product_id: string; qty: string; rate: string; batch: string; rateTouched: boolean }
-export type Prefill = { customer_id: string; rows: Omit<Row, 'key' | 'rateTouched'>[]; source_id: string; source_number: string; reference: string }
+export type Prefill = { party_id: string; rows: Omit<Row, 'key' | 'rateTouched'>[]; source_id: string; source_number: string; reference: string }
 
 const blank = (key: number): Row => ({ key, product_id: '', qty: '1', rate: '', batch: '', rateTouched: false })
 const plusDays = (d: number) => new Date(Date.now() + d * 86400000).toISOString().slice(0, 10)
 
-export function DocumentEditor({ kind, customers, products, sellerState, prefill }: {
-  kind: Kind; customers: Customer[]; products: Product[]; sellerState: string; prefill?: Prefill
+export function DocumentEditor({ kind, parties, products, sellerState, prefill }: {
+  kind: Kind; parties: Customer[]; products: Product[]; sellerState: string; prefill?: Prefill
 }) {
   const cfg = KINDS[kind]
   const [state, action] = useActionState(createDocument, {})
-  const [customerId, setCustomerId] = useState(prefill?.customer_id ?? '')
+  const [partyId, setPartyId] = useState(prefill?.party_id ?? '')
   const [rows, setRows] = useState<Row[]>(() =>
     prefill?.rows.length ? prefill.rows.map((r, i) => ({ ...r, key: i + 1, rateTouched: true })) : [blank(1), blank(2), blank(3)]
   )
   const [nextKey, setNextKey] = useState(rows.length + 1)
   const byId = useMemo(() => new Map(products.map((p) => [p.id, p])), [products])
-  const customer = customers.find((c) => c.id === customerId)
-  const type = customer ? gstType(sellerState, customer.state_code) : 'cgst_sgst'
+  const party = parties.find((c) => c.id === partyId)
+  const type = party ? gstType(sellerState, party.state_code) : 'cgst_sgst'
 
   function update(key: number, patch: Partial<Row>) {
     setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)))
   }
   function pickProduct(key: number, product_id: string) {
     const p = byId.get(product_id)
-    setRows((rs) => rs.map((r) => (r.key === key ? { ...r, product_id, rate: p && !r.rateTouched ? String(Number(p.price)) : r.rate } : r)))
+    // List price is a selling price, so purchase bills never prefill it.
+    setRows((rs) => rs.map((r) => (r.key === key ? { ...r, product_id, rate: p && !r.rateTouched && kind !== 'purchase' ? String(Number(p.price)) : r.rate } : r)))
   }
 
   const lines = rows.map((r) => {
     const p = byId.get(r.product_id)
-    const qty = Number(r.qty), rate = r.rate === '' && p ? Number(p.price) : Number(r.rate)
+    const qty = Number(r.qty), rate = r.rate === '' && p && kind !== 'purchase' ? Number(p.price) : Number(r.rate)
     if (!p || !(qty > 0) || !(rate >= 0)) return null
     return { qty, ...lineTotals(qty, rate, Number(p.gst_rate)) }
   })
@@ -60,15 +61,15 @@ export function DocumentEditor({ kind, customers, products, sellerState, prefill
           <p className="rounded-md bg-tint px-3 py-2 text-sm">Started from {prefill.source_number}. Lines are copied in; change anything before saving.</p>
         )}
         <div className="grid gap-3 rounded-lg border border-line bg-paper p-4 sm:grid-cols-2">
-          <Field label={kind === 'challan' ? 'Consignee (ship to)' : 'Customer'}>
-            <select name="customer_id" required value={customerId} onChange={(e) => setCustomerId(e.target.value)} className={inputClass}>
-              <option value="">Choose a customer</option>
-              {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          <Field label={kind === 'challan' ? 'Consignee (ship to)' : kind === 'purchase' ? 'Vendor' : 'Customer'}>
+            <select name="party_id" required value={partyId} onChange={(e) => setPartyId(e.target.value)} className={inputClass}>
+              <option value="">{kind === 'purchase' ? 'Choose a vendor' : 'Choose a customer'}</option>
+              {parties.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </Field>
           <Field label={`${cfg.label} date`}><input name="date" type="date" required defaultValue={plusDays(0)} className={inputClass} /></Field>
           {kind === 'quotation' && <Field label="Valid until"><input name="valid_until" type="date" required defaultValue={plusDays(30)} className={inputClass} /></Field>}
-          <Field label={kind === 'quotation' ? 'Reference (optional)' : 'Customer PO number (optional)'}><input name="reference" defaultValue={prefill?.reference ?? ''} className={inputClass} /></Field>
+          <Field label={kind === 'quotation' ? 'Reference (optional)' : kind === 'purchase' ? "Vendor's bill number" : 'Customer PO number (optional)'}><input name="reference" required={kind === 'purchase'} defaultValue={prefill?.reference ?? ''} className={inputClass} /></Field>
           {kind === 'challan' && (
             <>
               <Field label="E-way bill number (optional)"><input name="eway_bill" className={inputClass} /></Field>
@@ -106,12 +107,12 @@ export function DocumentEditor({ kind, customers, products, sellerState, prefill
           </div>
         </div>
 
-        <Field label={`Notes on the ${cfg.label.toLowerCase()} (optional)`}><textarea name="notes" rows={2} className={inputClass} placeholder={kind === 'challan' ? 'Delivered by hand' : 'Payment due within 30 days'} /></Field>
+        <Field label={kind === 'purchase' ? 'Notes (optional)' : `Notes on the ${cfg.label.toLowerCase()} (optional)`}><textarea name="notes" rows={2} className={inputClass} placeholder={kind === 'challan' ? 'Delivered by hand' : kind === 'purchase' ? 'Received in 3 cartons' : 'Payment due within 30 days'} /></Field>
         <FormError message={state.error} />
       </div>
 
       <aside className="h-fit rounded-lg border border-line bg-paper p-4 text-sm lg:sticky lg:top-6">
-        <p className="mb-3 text-ink-soft">{filled} {filled === 1 ? 'line' : 'lines'}{cfg.money && customer ? ` · ${type === 'igst' ? 'IGST (other state)' : 'CGST + SGST (Telangana)'}` : ''}</p>
+        <p className="mb-3 text-ink-soft">{filled} {filled === 1 ? 'line' : 'lines'}{cfg.money && party ? ` · ${type === 'igst' ? 'IGST (other state)' : 'CGST + SGST (Telangana)'}` : ''}</p>
         {cfg.money ? (
           <dl className="space-y-1.5 tabular-nums">
             <div className="flex justify-between"><dt>Taxable value</dt><dd>{inr(subtotal)}</dd></div>

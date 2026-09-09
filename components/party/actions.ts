@@ -6,16 +6,19 @@ import { isValidGstin, stateCodeFromGstin } from '@/lib/gst'
 import { STATES } from '@/lib/states'
 import type { ActionState } from '@/app/login/actions'
 
-function readCustomer(formData: FormData) {
+export type PartyTable = 'customers' | 'vendors'
+const PATH: Record<PartyTable, string> = { customers: '/customers', vendors: '/vendors' }
+
+function read(table: PartyTable, formData: FormData) {
   const name = String(formData.get('name') ?? '').trim()
   const gstin = String(formData.get('gstin') ?? '').trim().toUpperCase()
   let state_code = String(formData.get('state_code') ?? '')
-  if (!name) return { error: 'Give the customer a name.' }
+  if (!name) return { error: `Give the ${table === 'vendors' ? 'vendor' : 'customer'} a name.` }
   if (gstin) {
     if (!isValidGstin(gstin)) return { error: 'That GSTIN is not in the right format. It should look like 36AAACB2894G1ZM.' }
     state_code = stateCodeFromGstin(gstin) // the GSTIN decides the state
   }
-  if (!STATES[state_code]) return { error: 'Pick the customer\'s state.' }
+  if (!STATES[state_code]) return { error: 'Pick the state.' }
   return {
     row: {
       name,
@@ -27,30 +30,30 @@ function readCustomer(formData: FormData) {
   }
 }
 
-export async function addCustomer(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const r = readCustomer(formData)
+export async function addParty(table: PartyTable, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  const r = read(table, formData)
   if ('error' in r) return r
   const supabase = await createClient()
-  const { error } = await supabase.from('customers').insert(r.row)
+  const { error } = await supabase.from(table).insert(r.row)
   if (error) return { error: `Could not save: ${error.message}` }
-  revalidatePath('/customers')
+  revalidatePath(PATH[table])
   return { ok: Date.now() }
 }
 
-export async function updateCustomer(id: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
-  const r = readCustomer(formData)
+export async function updateParty(table: PartyTable, id: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  const r = read(table, formData)
   if ('error' in r) return r
   const supabase = await createClient()
-  const { error } = await supabase.from('customers').update(r.row).eq('id', id)
+  const { error } = await supabase.from(table).update(r.row).eq('id', id)
   if (error) return { error: `Could not save: ${error.message}` }
-  revalidatePath('/customers')
-  redirect('/customers')
+  revalidatePath(PATH[table])
+  redirect(PATH[table])
 }
 
-export async function deleteCustomer(id: string): Promise<ActionState> {
+export async function deleteParty(table: PartyTable, id: string): Promise<ActionState> {
   const supabase = await createClient()
-  const { error } = await supabase.from('customers').delete().eq('id', id)
-  if (error) return { error: error.code === '23503' ? 'This customer has documents, so it cannot be deleted.' : `Could not delete: ${error.message}` }
-  revalidatePath('/customers')
-  redirect('/customers')
+  const { error } = await supabase.from(table).delete().eq('id', id)
+  if (error) return { error: error.code === '23503' ? 'There are documents for this name, so it cannot be deleted.' : `Could not delete: ${error.message}` }
+  revalidatePath(PATH[table])
+  redirect(PATH[table])
 }

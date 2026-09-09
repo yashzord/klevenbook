@@ -26,6 +26,15 @@ const sections = [
     ],
   },
   {
+    title: 'Buying from vendors',
+    body: [
+      ['Vendors', 'Who you buy from, with their GSTIN. Same form as customers.'],
+      ['Purchase bills', 'When a vendor bill arrives, enter it under Purchases with the vendor\'s own bill number and the rates on their bill. Nothing prefills, because your list price is a selling price.'],
+      ['Paying vendors', 'Record what you paid on the bill, the same way as customer payments. Home shows what you still owe.'],
+      ['For your CA', 'On the Purchases page, download the CSV for the month. It is the input tax credit side of GST.'],
+    ],
+  },
+  {
     title: 'Printing and sending',
     body: [
       ['WhatsApp', 'On any document press "Send on WhatsApp". WhatsApp opens with a message and a private link to the document, addressed to the customer\'s number. They can view and print it without logging in.'],

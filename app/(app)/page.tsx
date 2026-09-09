@@ -5,23 +5,26 @@ import { formatDate } from '@/lib/format'
 import { KINDS, type Kind } from '@/lib/documents'
 import { sumPaid } from '@/lib/payments'
 
-type Owed = { id: string; number: string; date: string; total: string; customers: { name: string } | null; payments: { amount: string }[] | null }
-type Recent = { id: string; kind: Kind; number: string; date: string; total: string; cancelled_at: string | null; customers: { name: string } | null }
+type Owed = { id: string; number: string; date: string; total: string; customers: { name: string } | null; vendors: { name: string } | null; payments: { amount: string }[] | null }
+type Recent = { id: string; kind: Kind; number: string; date: string; total: string; cancelled_at: string | null; customers: { name: string } | null; vendors: { name: string } | null }
 
 // Home: a checklist that ticks itself off from real data, then quick actions and recent documents.
 export default async function HomePage() {
   const supabase = await createClient()
-  const [{ data: settings }, { count: products }, { count: customers }, { count: invoices }, { count: paymentsCount }, { data: recent }, { data: open }] = await Promise.all([
+  const [{ data: settings }, { count: products }, { count: customers }, { count: invoices }, { count: paymentsCount }, { data: recent }, { data: open }, { data: openPurchases }] = await Promise.all([
     supabase.from('settings').select('business_name, gstin').single<{ business_name: string; gstin: string | null }>(),
     supabase.from('products').select('*', { count: 'exact', head: true }),
     supabase.from('customers').select('*', { count: 'exact', head: true }),
     supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('kind', 'invoice'),
     supabase.from('payments').select('*', { count: 'exact', head: true }),
-    supabase.from('invoices').select('id, kind, number, date, total, cancelled_at, customers(name)').order('created_at', { ascending: false }).limit(8).returns<Recent[]>(),
-    supabase.from('invoices').select('id, number, date, total, customers(name), payments(amount)').eq('kind', 'invoice').is('cancelled_at', null).order('date').returns<Owed[]>(),
+    supabase.from('invoices').select('id, kind, number, date, total, cancelled_at, customers(name), vendors(name)').order('created_at', { ascending: false }).limit(8).returns<Recent[]>(),
+    supabase.from('invoices').select('id, number, date, total, customers(name), vendors(name), payments(amount)').eq('kind', 'invoice').is('cancelled_at', null).order('date').returns<Owed[]>(),
+    supabase.from('invoices').select('id, number, date, total, customers(name), vendors(name), payments(amount)').eq('kind', 'purchase').is('cancelled_at', null).order('date').returns<Owed[]>(),
   ])
-  const owed = (open ?? []).map((o) => ({ ...o, due: Math.round((Number(o.total) - sumPaid(o.payments)) * 100) / 100 })).filter((o) => o.due > 0.005)
-  const owedTotal = Math.round(owed.reduce((s, o) => s + o.due, 0) * 100) / 100
+  const withDue = (rows: Owed[] | null) => (rows ?? []).map((o) => ({ ...o, due: Math.round((Number(o.total) - sumPaid(o.payments)) * 100) / 100 })).filter((o) => o.due > 0.005)
+  const owed = withDue(open), owing = withDue(openPurchases)
+  const sumDue = (rows: { due: number }[]) => Math.round(rows.reduce((s, o) => s + o.due, 0) * 100) / 100
+  const owedTotal = sumDue(owed), owingTotal = sumDue(owing)
 
   const steps = [
     { done: !!settings?.gstin && settings.business_name !== 'My Business', href: '/settings', title: 'Add your business details', why: 'Name, GSTIN and address print at the top of every document.' },
@@ -85,6 +88,26 @@ export default async function HomePage() {
         </section>
       )}
 
+      {owing.length > 0 && (
+        <section className="mb-8">
+          <div className="mb-2 flex items-baseline justify-between"><h2 className="font-semibold">You owe vendors</h2><span className="text-sm tabular-nums text-ink-soft">{inr(owingTotal)} across {owing.length} {owing.length === 1 ? 'bill' : 'bills'}</span></div>
+          <div className="overflow-x-auto rounded-lg border border-line bg-paper">
+            <table className="w-full text-sm">
+              <tbody>
+                {owing.slice(0, 5).map((o) => (
+                  <tr key={o.id} className="border-t border-line first:border-t-0 hover:bg-tint/60">
+                    <td className="whitespace-nowrap px-4 py-2"><Link href={`/purchases/${o.id}`} className="font-medium text-brand-deep hover:underline">{o.number}</Link></td>
+                    <td className="px-4 py-2">{o.vendors?.name}</td>
+                    <td className="hidden whitespace-nowrap px-4 py-2 text-ink-soft sm:table-cell">{formatDate(o.date)}</td>
+                    <td className="whitespace-nowrap px-4 py-2 text-right tabular-nums">{inr(o.due)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
       {recent && recent.length > 0 && (
         <section>
           <h2 className="mb-2 font-semibold">Recent documents</h2>
@@ -95,7 +118,7 @@ export default async function HomePage() {
                   <tr key={d.id} className={`border-t border-line first:border-t-0 hover:bg-tint/60 ${d.cancelled_at ? 'text-ink-soft' : ''}`}>
                     <td className="hidden px-4 py-2 text-ink-soft sm:table-cell">{KINDS[d.kind].label}</td>
                     <td className="whitespace-nowrap px-4 py-2"><Link href={`${KINDS[d.kind].path}/${d.id}`} className="font-medium text-brand-deep hover:underline">{d.number}</Link>{d.cancelled_at && <span className="ml-2 rounded bg-red-50 px-1.5 py-0.5 text-xs text-red-700">Cancelled</span>}</td>
-                    <td className="px-4 py-2">{d.customers?.name}</td>
+                    <td className="px-4 py-2">{(d.customers ?? d.vendors)?.name}</td>
                     <td className="hidden whitespace-nowrap px-4 py-2 text-ink-soft sm:table-cell">{formatDate(d.date)}</td>
                     <td className="whitespace-nowrap px-4 py-2 text-right">{KINDS[d.kind].money ? inr(d.total) : ''}</td>
                   </tr>

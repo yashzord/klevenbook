@@ -1,6 +1,6 @@
 # KlevenBook
 
-Invoicing for small Indian medical distributors. GST-ready tax invoices, quotations, delivery challans, products, customers, and a CSV export for GST filing. Open source (MIT).
+Invoicing for small Indian medical distributors. GST-ready tax invoices, quotations, delivery challans, purchase bills, payments in and out, WhatsApp sharing, products, customers, vendors, and CSV exports for GST filing. Open source (MIT).
 
 Built with Next.js 16, Supabase, Tailwind. Deployed on Vercel at book.klevencare.com.
 

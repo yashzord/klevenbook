@@ -5,8 +5,8 @@ import { NavLink } from './nav-link'
 import { MobileMenu } from './mobile-menu'
 
 const links = [
-  ['/', 'Home'], ['/invoices', 'Invoices'], ['/quotations', 'Quotations'], ['/challans', 'Challans'],
-  ['/products', 'Products'], ['/customers', 'Customers'],
+  ['/', 'Home'], ['/invoices', 'Invoices'], ['/quotations', 'Quotations'], ['/challans', 'Challans'], ['/purchases', 'Purchases'],
+  ['/products', 'Products'], ['/customers', 'Customers'], ['/vendors', 'Vendors'],
 ] as const
 const rightLinks = [['/help', 'Help'], ['/settings', 'Settings']] as const
 
@@ -16,11 +16,11 @@ export default function AppLayout({ children }: LayoutProps<'/'>) {
     <>
       <div className="rule-brand no-print" />
       <header className="no-print relative border-b border-line bg-paper">
-        <nav className="mx-auto flex max-w-5xl items-center gap-1 px-4 py-2 text-sm">
-          <Link href="/" className="mr-4 flex items-center gap-2 font-semibold"><Image src="/icon.png" alt="" width={28} height={28} /> KlevenBook</Link>
-          <div className="hidden items-center gap-1 md:flex">{links.map(([h, l]) => <NavLink key={h} href={h}>{l}</NavLink>)}</div>
-          <div className="ml-auto hidden items-center gap-1 md:flex">{rightLinks.map(([h, l]) => <NavLink key={h} href={h}>{l}</NavLink>)}{signOut}</div>
-          <div className="ml-auto md:hidden">
+        <nav className="mx-auto flex max-w-6xl items-center gap-0.5 whitespace-nowrap px-4 py-2 text-sm">
+          <Link href="/" className="mr-3 flex items-center gap-2 font-semibold"><Image src="/icon.png" alt="" width={28} height={28} /> KlevenBook</Link>
+          <div className="hidden items-center gap-1 lg:flex">{links.map(([h, l]) => <NavLink key={h} href={h}>{l}</NavLink>)}</div>
+          <div className="ml-auto hidden items-center gap-1 lg:flex">{rightLinks.map(([h, l]) => <NavLink key={h} href={h}>{l}</NavLink>)}{signOut}</div>
+          <div className="ml-auto lg:hidden">
             <MobileMenu>
               {[...links, ...rightLinks].map(([h, l]) => <NavLink key={h} href={h}>{l}</NavLink>)}
               {signOut}
