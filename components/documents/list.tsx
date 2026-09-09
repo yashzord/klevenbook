@@ -5,6 +5,12 @@ import { formatDate } from '@/lib/format'
 import { KINDS, type Kind } from '@/lib/documents'
 import { ExportForm } from './export-form'
 
+const HINT: Record<Kind, string> = {
+  invoice: 'Tax documents for sales. Download the CSV for your CA at month end.',
+  quotation: 'Price offers. Open one and press Make invoice when the customer confirms.',
+  challan: 'Travels with the goods. Start one from an invoice so the lines match.',
+}
+
 type Row = { id: string; number: string; date: string; total: string; packages: number | null; cancelled_at: string | null; customers: { name: string } | null }
 
 export async function DocumentList({ kind }: { kind: Kind }) {
@@ -21,7 +27,10 @@ export async function DocumentList({ kind }: { kind: Kind }) {
   return (
     <>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">{cfg.plural}</h1>
+        <div>
+          <h1 className="text-2xl font-semibold">{cfg.plural}</h1>
+          <p className="text-sm text-ink-soft">{HINT[kind]}</p>
+        </div>
         <div className="flex items-center gap-3">
           {kind === 'invoice' && docs.length > 0 && <ExportForm />}
           <Link href={`${cfg.path}/new`} className="rounded-md bg-leaf px-4 py-2 font-medium text-white transition hover:bg-leaf-deep">New {cfg.label.toLowerCase()}</Link>

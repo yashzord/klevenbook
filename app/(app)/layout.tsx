@@ -10,12 +10,14 @@ export default function AppLayout({ children }: LayoutProps<'/'>) {
       <header className="no-print border-b border-line bg-paper">
         <nav className="mx-auto flex max-w-5xl items-center gap-1 px-4 py-2 text-sm">
           <Link href="/" className="mr-4 flex items-center gap-2 font-semibold"><Image src="/icon.png" alt="" width={28} height={28} /> KlevenBook</Link>
-          <NavLink href="/">Invoices</NavLink>
+          <NavLink href="/">Home</NavLink>
+          <NavLink href="/invoices">Invoices</NavLink>
           <NavLink href="/quotations">Quotations</NavLink>
           <NavLink href="/challans">Challans</NavLink>
           <NavLink href="/products">Products</NavLink>
           <NavLink href="/customers">Customers</NavLink>
-          <NavLink href="/settings" className="ml-auto">Settings</NavLink>
+          <NavLink href="/help" className="ml-auto">Help</NavLink>
+          <NavLink href="/settings">Settings</NavLink>
           <form action={logout}><button className="rounded-md px-3 py-1.5 text-ink-soft hover:bg-tint hover:text-ink">Sign out</button></form>
         </nav>
       </header>
