@@ -2,42 +2,52 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { gstType, lineTotals, splitTax } from '@/lib/gst'
-import { ROW_COUNT, type Customer, type Product, type Settings } from '@/lib/types'
+import type { Customer, Product, Settings } from '@/lib/types'
+import type { ActionState } from '@/app/login/actions'
 
+const MAX_ROWS = 100
 
-export async function createInvoice(formData: FormData) {
-  const supabase = await createClient()
+// The browser shows live totals for convenience; everything is recomputed here from prices in the database.
+export async function createInvoice(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const customer_id = String(formData.get('customer_id') ?? '')
   const date = String(formData.get('date') ?? '')
-  if (!customer_id || !date) throw new Error('Customer and date are required')
+  if (!customer_id) return { error: 'Pick a customer.' }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { error: 'Pick a date.' }
 
+  let rows: { product_id: string; qty: number; rate: string }[]
+  try {
+    rows = JSON.parse(String(formData.get('items') ?? '[]'))
+    if (!Array.isArray(rows) || rows.length > MAX_ROWS) throw new Error()
+  } catch {
+    return { error: 'The line items could not be read. Reload the page and try again.' }
+  }
+
+  const supabase = await createClient()
   const [{ data: settings }, { data: customer }, { data: products }] = await Promise.all([
     supabase.from('settings').select('*').single<Settings>(),
     supabase.from('customers').select('*').eq('id', customer_id).single<Customer>(),
     supabase.from('products').select('*').returns<Product[]>(),
   ])
-  if (!settings || !customer || !products) throw new Error('Could not load data')
+  if (!settings || !customer || !products) return { error: 'Could not load your data. Reload and try again.' }
 
-  const type = gstType(settings.state_code, customer.state_code)
   const items = []
-  for (let i = 0; i < ROW_COUNT; i++) {
-    const product = products.find((p) => p.id === formData.get(`product_${i}`))
-    const qty = Number(formData.get(`qty_${i}`))
+  for (const [i, row] of rows.entries()) {
+    const product = products.find((p) => p.id === row.product_id)
+    const qty = Number(row.qty)
     if (!product || !(qty > 0)) continue
-    const rateInput = String(formData.get(`rate_${i}`) ?? '').trim()
-    const rate = rateInput === '' ? Number(product.price) : Number(rateInput)
-    if (!(rate >= 0)) throw new Error(`Bad rate on row ${i + 1}`)
+    const rate = String(row.rate).trim() === '' ? Number(product.price) : Number(row.rate)
+    if (!(rate >= 0)) return { error: `Row ${i + 1}: rate must be 0 or more.` }
     const { amount, tax } = lineTotals(qty, rate, Number(product.gst_rate))
     items.push({ product_id: product.id, description: product.name, hsn: product.hsn, unit: product.unit, qty, rate, gst_rate: Number(product.gst_rate), amount, tax })
   }
-  if (items.length === 0) throw new Error('Add at least one item')
+  if (items.length === 0) return { error: 'Add at least one line with a product and a quantity.' }
 
-  const subtotal = items.reduce((s, i) => s + i.amount, 0)
-  const tax = items.reduce((s, i) => s + i.tax, 0)
-  const split = splitTax(Math.round(tax * 100) / 100, type)
-  const inv = { customer_id, date, gst_type: type, subtotal, ...split, total: Math.round((subtotal + tax) * 100) / 100, notes: String(formData.get('notes') ?? '') }
+  const type = gstType(settings.state_code, customer.state_code)
+  const subtotal = Math.round(items.reduce((s, i) => s + i.amount, 0) * 100) / 100
+  const tax = Math.round(items.reduce((s, i) => s + i.tax, 0) * 100) / 100
+  const inv = { customer_id, date, gst_type: type, subtotal, ...splitTax(tax, type), total: Math.round((subtotal + tax) * 100) / 100, notes: String(formData.get('notes') ?? '') }
 
   const { data: id, error } = await supabase.rpc('create_invoice', { inv, items })
-  if (error) throw error
+  if (error) return { error: `Could not save the invoice: ${error.message}` }
   redirect(`/invoices/${id}`)
 }

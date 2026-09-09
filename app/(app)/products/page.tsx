@@ -1,37 +1,31 @@
 import { createClient } from '@/lib/supabase/server'
 import { inr } from '@/lib/gst'
 import type { Product } from '@/lib/types'
-import { addProduct } from './actions'
+import { ProductForm } from './product-form'
 
 export default async function ProductsPage() {
   const supabase = await createClient()
-  const { data, error } = await supabase.from('products').select('*').order('name')
+  const { data, error } = await supabase.from('products').select('*').order('name').returns<Product[]>()
   if (error) throw error
-  const products = data as Product[]
 
   return (
     <>
-      <h1 className="mb-4 text-xl font-semibold">Products</h1>
-      <form action={addProduct} className="mb-6 grid grid-cols-6 gap-2 rounded bg-white p-4 shadow">
-        <input name="name" required placeholder="Product name" className="col-span-2 rounded border p-2" />
-        <input name="hsn" placeholder="HSN" className="rounded border p-2" />
-        <input name="unit" placeholder="Unit (pcs)" className="rounded border p-2" />
-        <input name="price" type="number" step="0.01" min="0" required placeholder="Price" className="rounded border p-2" />
-        <input name="gst_rate" type="number" step="0.01" min="0" max="100" required placeholder="GST %" className="rounded border p-2" />
-        <button className="col-span-6 rounded bg-slate-900 p-2 text-white">Add product</button>
-      </form>
-      <table className="w-full bg-white text-sm shadow">
-        <thead className="bg-slate-100 text-left"><tr><th className="p-2">Name</th><th className="p-2">HSN</th><th className="p-2">Unit</th><th className="p-2 text-right">Price</th><th className="p-2 text-right">GST %</th></tr></thead>
-        <tbody>
-          {products.map((p) => (
-            <tr key={p.id} className="border-t">
-              <td className="p-2">{p.name}</td><td className="p-2">{p.hsn}</td><td className="p-2">{p.unit}</td>
-              <td className="p-2 text-right">{inr(p.price)}</td><td className="p-2 text-right">{Number(p.gst_rate)}</td>
-            </tr>
-          ))}
-          {products.length === 0 && <tr><td className="p-4 text-slate-500" colSpan={5}>No products yet.</td></tr>}
-        </tbody>
-      </table>
+      <h1 className="mb-5 text-2xl font-semibold">Products</h1>
+      <ProductForm />
+      <div className="mt-6 overflow-x-auto rounded-lg border border-line bg-paper">
+        <table className="w-full text-sm">
+          <thead className="bg-tint text-left text-ink-soft"><tr><th className="px-4 py-2 font-medium">Name</th><th className="px-4 py-2 font-medium">HSN</th><th className="px-4 py-2 font-medium">Unit</th><th className="px-4 py-2 text-right font-medium">List price</th><th className="px-4 py-2 text-right font-medium">GST %</th></tr></thead>
+          <tbody>
+            {data.map((p) => (
+              <tr key={p.id} className="border-t border-line hover:bg-tint/60">
+                <td className="px-4 py-2 font-medium">{p.name}</td><td className="px-4 py-2">{p.hsn}</td><td className="px-4 py-2">{p.unit}</td>
+                <td className="px-4 py-2 text-right">{inr(p.price)}</td><td className="px-4 py-2 text-right">{Number(p.gst_rate)}</td>
+              </tr>
+            ))}
+            {data.length === 0 && <tr><td className="px-4 py-6 text-center text-ink-soft" colSpan={5}>No products yet. Add your first one above.</td></tr>}
+          </tbody>
+        </table>
+      </div>
     </>
   )
 }

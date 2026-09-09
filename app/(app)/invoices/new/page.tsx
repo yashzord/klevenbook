@@ -1,46 +1,31 @@
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ROW_COUNT, type Customer, type Product } from '@/lib/types'
-import { createInvoice } from './actions'
+import type { Customer, Product, Settings } from '@/lib/types'
+import { InvoiceEditor } from './invoice-editor'
 
 export default async function NewInvoicePage() {
   const supabase = await createClient()
-  const [{ data: customers }, { data: products }] = await Promise.all([
+  const [{ data: customers }, { data: products }, { data: settings }] = await Promise.all([
     supabase.from('customers').select('*').order('name').returns<Customer[]>(),
     supabase.from('products').select('*').order('name').returns<Product[]>(),
+    supabase.from('settings').select('state_code').single<Pick<Settings, 'state_code'>>(),
   ])
-  const today = new Date().toISOString().slice(0, 10)
-
+  if (!customers?.length || !products?.length) {
+    return (
+      <div className="rounded-lg border border-dashed border-line bg-paper p-10 text-center">
+        <p className="font-medium">Before the first invoice</p>
+        <p className="mt-1 text-sm text-ink-soft">You need at least one product and one customer.</p>
+        <div className="mt-4 flex justify-center gap-3 text-sm">
+          {!products?.length && <Link href="/products" className="text-brand hover:underline">Add a product</Link>}
+          {!customers?.length && <Link href="/customers" className="text-brand hover:underline">Add a customer</Link>}
+        </div>
+      </div>
+    )
+  }
   return (
     <>
-      <h1 className="mb-4 text-xl font-semibold">New invoice</h1>
-      <form action={createInvoice} className="space-y-4 rounded bg-white p-4 shadow">
-        <div className="grid grid-cols-2 gap-2">
-          <select name="customer_id" required className="rounded border p-2">
-            <option value="">Select customer</option>
-            {customers?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
-          <input name="date" type="date" defaultValue={today} required className="rounded border p-2" />
-        </div>
-        <table className="w-full text-sm">
-          <thead className="text-left"><tr><th className="p-1">Product</th><th className="p-1 w-24">Qty</th><th className="p-1 w-32">Rate (blank = list price)</th></tr></thead>
-          <tbody>
-            {Array.from({ length: ROW_COUNT }, (_, i) => (
-              <tr key={i}>
-                <td className="p-1">
-                  <select name={`product_${i}`} className="w-full rounded border p-2">
-                    <option value="">—</option>
-                    {products?.map((p) => <option key={p.id} value={p.id}>{p.name} (₹{Number(p.price)}, {Number(p.gst_rate)}%)</option>)}
-                  </select>
-                </td>
-                <td className="p-1"><input name={`qty_${i}`} type="number" step="any" min="0" className="w-full rounded border p-2" /></td>
-                <td className="p-1"><input name={`rate_${i}`} type="number" step="0.01" min="0" className="w-full rounded border p-2" /></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <textarea name="notes" placeholder="Notes (optional)" className="w-full rounded border p-2" />
-        <button className="rounded bg-slate-900 px-4 py-2 text-white">Create invoice</button>
-      </form>
+      <h1 className="mb-5 text-2xl font-semibold">New invoice</h1>
+      <InvoiceEditor customers={customers} products={products} sellerState={settings?.state_code ?? '36'} />
     </>
   )
 }

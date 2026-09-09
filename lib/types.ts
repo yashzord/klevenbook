@@ -14,5 +14,3 @@ export type InvoiceItem = {
   qty: string; rate: string; gst_rate: string; amount: string; tax: string
 }
 
-// ponytail: fixed rows on the new-invoice form, no JS. Make it dynamic when an invoice needs more than 10 lines.
-export const ROW_COUNT = 10
