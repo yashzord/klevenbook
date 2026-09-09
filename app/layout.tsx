@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans } from "next/font/google";
 import "./globals.css";
 
@@ -6,9 +6,12 @@ import "./globals.css";
 const plex = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-plex" });
 
 export const metadata: Metadata = {
-  title: "KlevenBook",
+  title: { default: "KlevenBook", template: "%s · KlevenBook" },
   description: "Invoicing for small Indian distributors",
+  robots: { index: false, follow: false },
 };
+
+export const viewport: Viewport = { themeColor: "#0f2a52" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

@@ -30,6 +30,16 @@ export function SettingsForm({ settings, sequences }: { settings: Settings; sequ
         <Field label="Email" className="sm:col-span-2"><input name="email" type="email" defaultValue={settings.email ?? ''} className={inputClass} /></Field>
       </section>
 
+      <section className="grid gap-3 rounded-lg border border-line bg-paper p-4 sm:grid-cols-6">
+        <h2 className="font-semibold sm:col-span-6">How customers pay you</h2>
+        <p className="-mt-2 text-sm text-ink-soft sm:col-span-6">Printed on every invoice so the customer can pay from the PDF.</p>
+        <Field label="Bank name" className="sm:col-span-2"><input name="bank_name" defaultValue={settings.bank_name ?? ''} className={inputClass} placeholder="HDFC Bank, Alkapur" /></Field>
+        <Field label="Account number" className="sm:col-span-2"><input name="bank_account" defaultValue={settings.bank_account ?? ''} className={inputClass} /></Field>
+        <Field label="IFSC" className="sm:col-span-2"><input name="bank_ifsc" defaultValue={settings.bank_ifsc ?? ''} className={`${inputClass} uppercase`} placeholder="HDFC0001234" /></Field>
+        <Field label="UPI ID" hint="Optional. Prints next to the bank details." className="sm:col-span-3"><input name="upi_id" defaultValue={settings.upi_id ?? ''} className={inputClass} placeholder="klevencare@hdfcbank" /></Field>
+        <Field label="Payment due in (days)" hint="Sets the due date printed on new invoices." className="sm:col-span-3"><input name="payment_terms_days" type="number" min="0" max="365" step="1" required defaultValue={settings.payment_terms_days} className={inputClass} /></Field>
+      </section>
+
       <section className="grid gap-3 rounded-lg border border-line bg-paper p-4 sm:grid-cols-3">
         <h2 className="font-semibold sm:col-span-3">Numbering</h2>
         <p className="-mt-2 text-sm text-ink-soft sm:col-span-3">Prefix plus a four-digit counter, for example KC-INV-2026-0001. Change the prefix when the financial year changes and set the next number back to 1.</p>

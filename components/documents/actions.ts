@@ -70,6 +70,7 @@ export async function createDocument(_prev: ActionState, formData: FormData): Pr
     reference,
     eway_bill: String(formData.get('eway_bill') ?? '').slice(0, 50),
     valid_until: kind === 'quotation' ? valid_until : null,
+    due_date: kind === 'invoice' ? new Date(new Date(date + 'T00:00:00Z').getTime() + settings.payment_terms_days * 86400000).toISOString().slice(0, 10) : null,
     packages: kind === 'challan' ? packages : null,
     source_id,
   }

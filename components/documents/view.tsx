@@ -14,7 +14,10 @@ import { ShareButtons } from './share-buttons'
 type Doc = Invoice & { customers: Customer | null; vendors?: Customer | null; invoice_items: InvoiceItem[]; source: { number: string; kind: Kind } | null }
 
 // Layout follows the Kleven Care letterhead and templates. Invoice fields per CGST Rule 46: https://cbic-gst.gov.in/cgst-rules.html
-export function DocumentView({ doc, settings, shareUrl }: { doc: Doc; settings: Settings; shareUrl?: string }) {
+export type CopyKind = 'original' | 'duplicate' | 'triplicate'
+const COPY_LABEL: Record<CopyKind, string> = { original: 'Original for recipient', duplicate: 'Duplicate for transporter', triplicate: 'Triplicate for supplier' }
+
+export function DocumentView({ doc, settings, shareUrl, copy = 'original' }: { doc: Doc; settings: Settings; shareUrl?: string; copy?: CopyKind }) {
   const kind = doc.kind, cfg = KINDS[kind], c = (doc.customers ?? doc.vendors)!
   const intra = doc.gst_type === 'cgst_sgst'
   const th = 'px-2 py-2 font-medium'
@@ -30,6 +33,13 @@ export function DocumentView({ doc, settings, shareUrl }: { doc: Doc; settings: 
         <div className="flex flex-wrap items-center gap-2">
           {shareUrl && !doc.cancelled_at && <CancelForm id={doc.id} label={cfg.label.toLowerCase()} />}
           {shareUrl && next && !doc.cancelled_at && <Link href={next.href} className="inline-flex min-h-11 items-center rounded-md border border-line bg-paper px-4 py-2 font-medium text-brand-deep transition hover:bg-tint">{next.label}</Link>}
+          {shareUrl && kind === 'invoice' && (
+            <span className="flex items-center gap-1 text-sm text-ink-soft">Print as
+              {(['original', 'duplicate', 'triplicate'] as CopyKind[]).map((c) => (
+                <Link key={c} href={`?copy=${c}`} scroll={false} className={`rounded px-2 py-1 capitalize ${copy === c ? 'bg-tint font-medium text-brand-deep' : 'hover:bg-tint'}`}>{c}</Link>
+              ))}
+            </span>
+          )}
           {shareUrl && cfg.party === 'customer' && <ShareButtons url={shareUrl} phone={c.phone} text={`Hello ${c.name}, here is ${cfg.label.toLowerCase()} ${doc.number} from ${settings.business_name}${cfg.money ? ` for ${inr(doc.total)}` : ''}: ${shareUrl}`} />}
           <PrintButton />
         </div>
@@ -52,6 +62,7 @@ export function DocumentView({ doc, settings, shareUrl }: { doc: Doc; settings: 
           </div>
         </header>
         <div className="rule-brand my-5" />
+        {kind === 'invoice' && <p className="mb-3 text-right text-xs uppercase tracking-wide text-ink-soft">{COPY_LABEL[copy]}</p>}
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
           <h1 className="text-xl font-semibold">{cfg.title}</h1>
@@ -59,6 +70,7 @@ export function DocumentView({ doc, settings, shareUrl }: { doc: Doc; settings: 
             <dt className="text-ink-soft">{cfg.label} number</dt><dd className="text-right font-medium">{doc.number}</dd>
             <dt className="text-ink-soft">Date</dt><dd className="text-right">{formatDate(doc.date)}</dd>
             {kind === 'quotation' && doc.valid_until && <><dt className="text-ink-soft">Valid until</dt><dd className="text-right">{formatDate(doc.valid_until)}</dd></>}
+            {kind === 'invoice' && doc.due_date && <><dt className="text-ink-soft">Pay by</dt><dd className="text-right">{formatDate(doc.due_date)}</dd></>}
             {doc.reference && <><dt className="text-ink-soft">{kind === 'quotation' ? 'Reference' : kind === 'purchase' ? "Vendor's bill no" : 'Customer PO'}</dt><dd className="text-right">{doc.reference}</dd></>}
             {doc.source && <><dt className="text-ink-soft">{doc.source.kind === 'invoice' ? 'Invoice' : 'Quotation'}</dt><dd className="text-right">{doc.source.number}</dd></>}
             {kind === 'challan' && doc.eway_bill && <><dt className="text-ink-soft">E-way bill</dt><dd className="text-right">{doc.eway_bill}</dd></>}
@@ -135,6 +147,17 @@ export function DocumentView({ doc, settings, shareUrl }: { doc: Doc; settings: 
           </dl>
         </div>
 
+        {kind === 'invoice' && (settings.bank_name || settings.upi_id) && (
+          <section className="mt-8 rounded-md border border-line p-4 text-sm">
+            <p className="font-medium">How to pay</p>
+            <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-4 gap-y-0.5 text-ink-soft">
+              {settings.bank_name && <><dt>Bank</dt><dd className="text-ink">{settings.bank_name}</dd></>}
+              {settings.bank_account && <><dt>Account</dt><dd className="text-ink">{settings.bank_account}</dd></>}
+              {settings.bank_ifsc && <><dt>IFSC</dt><dd className="text-ink">{settings.bank_ifsc}</dd></>}
+              {settings.upi_id && <><dt>UPI</dt><dd className="text-ink">{settings.upi_id}</dd></>}
+            </dl>
+          </section>
+        )}
         {kind === 'quotation' && settings.quotation_terms && (
           <section className="mt-8 text-sm"><p className="font-medium">Terms and conditions</p><p className="mt-1 whitespace-pre-line text-ink-soft">{settings.quotation_terms}</p></section>
         )}

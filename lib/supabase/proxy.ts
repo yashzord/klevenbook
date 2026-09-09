@@ -32,7 +32,7 @@ export async function updateSession(request: NextRequest) {
   const user = data?.claims
 
   const path = request.nextUrl.pathname
-  if (!user && !path.startsWith('/login') && !path.startsWith('/api/') && !path.startsWith('/share/')) {
+  if (!user && !path.startsWith('/login') && !path.startsWith('/api/') && !path.startsWith('/share/') && !path.startsWith('/auth/')) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)

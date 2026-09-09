@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { inr } from '@/lib/gst'
@@ -6,10 +7,11 @@ import { KINDS, type Kind } from '@/lib/documents'
 import { sumPaid } from '@/lib/payments'
 import { IconCheck } from '@/components/icons'
 
-type Owed = { id: string; number: string; date: string; total: string; customers: { name: string } | null; vendors: { name: string } | null; payments: { amount: string }[] | null }
+type Owed = { id: string; number: string; date: string; due_date: string | null; total: string; customers: { name: string } | null; vendors: { name: string } | null; payments: { amount: string }[] | null }
 type Recent = { id: string; kind: Kind; number: string; date: string; total: string; cancelled_at: string | null; customers: { name: string } | null; vendors: { name: string } | null }
 
 // Home: a checklist that ticks itself off from real data, then quick actions and recent documents.
+export const metadata: Metadata = { title: 'Home' }
 export default async function HomePage() {
   const supabase = await createClient()
   const [{ data: settings }, { count: products }, { count: customers }, { count: invoices }, { count: paymentsCount }, { data: recent }, { data: open }, { data: openPurchases }] = await Promise.all([
@@ -19,13 +21,14 @@ export default async function HomePage() {
     supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('kind', 'invoice'),
     supabase.from('payments').select('*', { count: 'exact', head: true }),
     supabase.from('invoices').select('id, kind, number, date, total, cancelled_at, customers(name), vendors(name)').order('created_at', { ascending: false }).limit(8).returns<Recent[]>(),
-    supabase.from('invoices').select('id, number, date, total, customers(name), vendors(name), payments(amount)').eq('kind', 'invoice').is('cancelled_at', null).order('date').returns<Owed[]>(),
-    supabase.from('invoices').select('id, number, date, total, customers(name), vendors(name), payments(amount)').eq('kind', 'purchase').is('cancelled_at', null).order('date').returns<Owed[]>(),
+    supabase.from('invoices').select('id, number, date, due_date, total, customers(name), vendors(name), payments(amount)').eq('kind', 'invoice').is('cancelled_at', null).order('date').returns<Owed[]>(),
+    supabase.from('invoices').select('id, number, date, due_date, total, customers(name), vendors(name), payments(amount)').eq('kind', 'purchase').is('cancelled_at', null).order('date').returns<Owed[]>(),
   ])
   const withDue = (rows: Owed[] | null) => (rows ?? []).map((o) => ({ ...o, due: Math.round((Number(o.total) - sumPaid(o.payments)) * 100) / 100 })).filter((o) => o.due > 0.005)
   const owed = withDue(open), owing = withDue(openPurchases)
   const sumDue = (rows: { due: number }[]) => Math.round(rows.reduce((s, o) => s + o.due, 0) * 100) / 100
   const owedTotal = sumDue(owed), owingTotal = sumDue(owing)
+  const today = new Date().toISOString().slice(0, 10)
 
   const steps = [
     { done: !!settings?.gstin && settings.business_name !== 'My Business', href: '/settings', title: 'Add your business details', why: 'Name, GSTIN and address print at the top of every document.' },
@@ -78,7 +81,7 @@ export default async function HomePage() {
                 {owed.slice(0, 5).map((o) => (
                   <tr key={o.id} className="border-t border-line first:border-t-0 hover:bg-tint/60">
                     <td className="whitespace-nowrap px-4 py-2"><Link href={`/invoices/${o.id}`} className="font-medium text-brand-deep hover:underline">{o.number}</Link></td>
-                    <td className="px-4 py-2">{o.customers?.name}</td>
+                    <td className="px-4 py-2">{o.customers?.name}{o.due_date && o.due_date < today && <span className="ml-2 rounded bg-red-50 px-1.5 py-0.5 text-xs text-red-700">Overdue</span>}</td>
                     <td className="hidden whitespace-nowrap px-4 py-2 text-ink-soft sm:table-cell">{formatDate(o.date)}</td>
                     <td className="whitespace-nowrap px-4 py-2 text-right tabular-nums">{inr(o.due)}</td>
                   </tr>

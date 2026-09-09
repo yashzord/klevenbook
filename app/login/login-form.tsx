@@ -1,5 +1,6 @@
 'use client'
 import { useActionState, useState } from 'react'
+import Link from 'next/link'
 import { Field, FormError, SubmitButton, inputClass } from '@/components/form'
 import { login } from './actions'
 
@@ -21,6 +22,7 @@ export function LoginForm() {
       </Field>
       <FormError message={state.error} />
       <SubmitButton pendingText="Signing in" className="w-full">Sign in</SubmitButton>
+      <p className="text-center text-sm"><Link href="/login/forgot" className="text-brand hover:underline">Forgot your password?</Link></p>
     </form>
   )
 }

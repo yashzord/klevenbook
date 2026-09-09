@@ -14,6 +14,7 @@ export default function AppLayout({ children }: LayoutProps<'/'>) {
   const signOut = <form action={logout}><button className="w-full rounded-md px-3 py-1.5 text-left text-ink-soft hover:bg-tint hover:text-ink">Sign out</button></form>
   return (
     <>
+      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-20 focus:rounded-md focus:bg-paper focus:px-3 focus:py-2 focus:shadow">Skip to content</a>
       <div className="rule-brand no-print" />
       <header className="no-print relative border-b border-line bg-paper">
         <nav className="mx-auto flex max-w-6xl items-center gap-0.5 whitespace-nowrap px-4 py-2 text-sm">
@@ -28,7 +29,7 @@ export default function AppLayout({ children }: LayoutProps<'/'>) {
           </div>
         </nav>
       </header>
-      <main className="mx-auto max-w-5xl p-4 sm:p-6">{children}</main>
+      <main id="main" className="mx-auto max-w-5xl p-4 sm:p-6">{children}</main>
     </>
   )
 }

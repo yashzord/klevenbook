@@ -1,7 +1,9 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import type { Sequence, Settings } from '@/lib/types'
 import { SettingsForm } from './settings-form'
 
+export const metadata: Metadata = { title: 'Settings' }
 export default async function SettingsPage() {
   const supabase = await createClient()
   const [{ data: settings }, { data: sequences }] = await Promise.all([

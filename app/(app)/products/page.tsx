@@ -1,9 +1,11 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { inr } from '@/lib/gst'
 import type { Product } from '@/lib/types'
 import { ProductForm } from './product-form'
 
+export const metadata: Metadata = { title: 'Products' }
 export default async function ProductsPage() {
   const supabase = await createClient()
   const { data, error } = await supabase.from('products').select('*').order('name').returns<Product[]>()

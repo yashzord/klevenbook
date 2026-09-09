@@ -4,11 +4,12 @@ import { useFormStatus } from 'react-dom'
 export const inputClass =
   'min-h-11 w-full rounded-md border border-line bg-paper px-3 py-2 text-ink outline-none transition placeholder:text-ink-soft/60 focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:opacity-60'
 
-export function Field({ label, children, className = '' }: { label: string; children: React.ReactNode; className?: string }) {
+export function Field({ label, hint, children, className = '' }: { label: string; hint?: string; children: React.ReactNode; className?: string }) {
   return (
     <label className={`block text-sm ${className}`}>
       <span className="mb-1 block font-medium text-ink">{label}</span>
       {children}
+      {hint && <span className="mt-1 block text-xs text-ink-soft">{hint}</span>}
     </label>
   )
 }

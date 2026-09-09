@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { IconArrowLeft } from '@/components/icons'
 import { notFound } from 'next/navigation'
@@ -7,6 +8,7 @@ import { DeleteButton } from '@/components/delete-button'
 import { ProductForm } from '../product-form'
 import { deleteProduct } from '../actions'
 
+export const metadata: Metadata = { title: 'Edit product' }
 export default async function EditProductPage({ params }: PageProps<'/products/[id]'>) {
   const { id } = await params
   const supabase = await createClient()

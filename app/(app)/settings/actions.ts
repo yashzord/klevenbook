@@ -16,6 +16,8 @@ export async function saveSettings(_prev: ActionState, formData: FormData): Prom
     state_code = stateCodeFromGstin(gstin)
   }
   if (!STATES[state_code]) return { error: 'Pick your state.' }
+  const terms = Number(formData.get('payment_terms_days'))
+  if (!(Number.isInteger(terms) && terms >= 0 && terms <= 365)) return { error: 'Payment terms must be a whole number of days, 0 to 365.' }
 
   const supabase = await createClient()
   const { error } = await supabase.from('settings').update({
@@ -25,6 +27,11 @@ export async function saveSettings(_prev: ActionState, formData: FormData): Prom
     address: String(formData.get('address') ?? '').trim() || null,
     phone: String(formData.get('phone') ?? '').trim() || null,
     email: String(formData.get('email') ?? '').trim() || null,
+    bank_name: String(formData.get('bank_name') ?? '').trim() || null,
+    bank_account: String(formData.get('bank_account') ?? '').trim() || null,
+    bank_ifsc: String(formData.get('bank_ifsc') ?? '').trim().toUpperCase() || null,
+    upi_id: String(formData.get('upi_id') ?? '').trim() || null,
+    payment_terms_days: terms,
     quotation_terms: String(formData.get('quotation_terms') ?? '').trim() || null,
     challan_notes: String(formData.get('challan_notes') ?? '').trim() || null,
   }).eq('id', 1)
