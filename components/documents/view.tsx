@@ -8,11 +8,12 @@ import { KINDS, type Kind } from '@/lib/documents'
 import type { Customer, Invoice, InvoiceItem, Settings } from '@/lib/types'
 import { PrintButton } from './print-button'
 import { CancelForm } from './cancel-form'
+import { ShareButtons } from './share-buttons'
 
 type Doc = Invoice & { customers: Customer; invoice_items: InvoiceItem[]; source: { number: string; kind: Kind } | null }
 
 // Layout follows the Kleven Care letterhead and templates. Invoice fields per CGST Rule 46: https://cbic-gst.gov.in/cgst-rules.html
-export function DocumentView({ doc, settings }: { doc: Doc; settings: Settings }) {
+export function DocumentView({ doc, settings, shareUrl }: { doc: Doc; settings: Settings; shareUrl?: string }) {
   const kind = doc.kind, cfg = KINDS[kind], c = doc.customers
   const intra = doc.gst_type === 'cgst_sgst'
   const th = 'px-2 py-2 font-medium'
@@ -24,10 +25,11 @@ export function DocumentView({ doc, settings }: { doc: Doc; settings: Settings }
   return (
     <>
       <div className="no-print mb-4 flex flex-wrap items-center justify-between gap-3">
-        <Link href={cfg.path} className="text-sm text-ink-soft hover:text-ink">← All {cfg.plural.toLowerCase()}</Link>
+        {shareUrl ? <Link href={cfg.path} className="text-sm text-ink-soft hover:text-ink">← All {cfg.plural.toLowerCase()}</Link> : <span />}
         <div className="flex flex-wrap items-center gap-2">
-          {!doc.cancelled_at && <CancelForm id={doc.id} label={cfg.label.toLowerCase()} />}
-          {next && !doc.cancelled_at && <Link href={next.href} className="rounded-md border border-line bg-paper px-4 py-2 font-medium text-brand-deep transition hover:bg-tint">{next.label}</Link>}
+          {shareUrl && !doc.cancelled_at && <CancelForm id={doc.id} label={cfg.label.toLowerCase()} />}
+          {shareUrl && next && !doc.cancelled_at && <Link href={next.href} className="rounded-md border border-line bg-paper px-4 py-2 font-medium text-brand-deep transition hover:bg-tint">{next.label}</Link>}
+          {shareUrl && <ShareButtons url={shareUrl} phone={c.phone} text={`Hello ${c.name}, here is ${cfg.label.toLowerCase()} ${doc.number} from ${settings.business_name}${cfg.money ? ` for ${inr(doc.total)}` : ''}: ${shareUrl}`} />}
           <PrintButton />
         </div>
       </div>

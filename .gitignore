@@ -44,3 +44,5 @@ next-env.d.ts
 .playwright-mcp/
 # local db backups
 backups/
+# screenshots taken during testing
+/*.png
