@@ -11,6 +11,8 @@ export default function AppLayout({ children }: LayoutProps<'/'>) {
         <nav className="mx-auto flex max-w-5xl items-center gap-1 px-4 py-2 text-sm">
           <Link href="/" className="mr-4 flex items-center gap-2 font-semibold"><Image src="/icon.png" alt="" width={28} height={28} /> KlevenBook</Link>
           <NavLink href="/">Invoices</NavLink>
+          <NavLink href="/quotations">Quotations</NavLink>
+          <NavLink href="/challans">Challans</NavLink>
           <NavLink href="/products">Products</NavLink>
           <NavLink href="/customers">Customers</NavLink>
           <form action={logout} className="ml-auto"><button className="rounded-md px-3 py-1.5 text-ink-soft hover:bg-tint hover:text-ink">Sign out</button></form>
