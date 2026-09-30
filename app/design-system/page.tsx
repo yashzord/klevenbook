@@ -242,6 +242,16 @@ export default function DesignSystemPage() {
                     </TableBody>
                   </Table>
                 </Card>
+                <Panel label="Live preview. While a document, Settings, or a customer is being filled in, the printed page shows beside the form and updates as she types. It is the same component that prints, shrunk to fit, so it cannot differ from the result. On narrow screens it opens from a Preview button. It is marked Draft and never prints.">
+                  <div className="mt-2 grid items-start gap-4 sm:grid-cols-[1fr_1.2fr]">
+                    <div className="space-y-2"><Skeleton className="h-10" /><Skeleton className="h-10" /><Skeleton className="h-24" /></div>
+                    <div className="rounded-lg p-3 ring-1 ring-foreground/10">
+                      <div className="flex items-start justify-between gap-2"><Image src="/logo.png" alt="" width={36} height={36} /><div className="w-1/2 space-y-1"><Skeleton className="ml-auto h-3 w-24" /><Skeleton className="ml-auto h-2 w-full" /></div></div>
+                      <div className="rule-brand my-2 h-0.5!" />
+                      <div className="space-y-1.5"><Skeleton className="h-8" /><Skeleton className="h-2" /><Skeleton className="h-2" /><Skeleton className="ml-auto h-3 w-1/3" /></div>
+                    </div>
+                  </div>
+                </Panel>
                 <div className="grid gap-4 md:grid-cols-2">
                   <Panel label="Empty. Says what is missing and links to the next step.">
                     <Empty className="mt-2 border p-6">

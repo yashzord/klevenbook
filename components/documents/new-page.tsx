@@ -14,11 +14,12 @@ export async function NewDocumentPage({ kind, from }: { kind: Kind; from?: strin
   const [{ data: parties }, { data: products }, { data: settings }, { data: source }] = await Promise.all([
     supabase.from(cfg.party === 'vendor' ? 'vendors' : 'customers').select('*').eq('hidden', false).order('name').returns<Customer[]>(),
     supabase.from('products').select('*').order('name').returns<Product[]>(),
-    supabase.from('settings').select('state_code').single<Pick<Settings, 'state_code'>>(),
+    supabase.from('settings').select('*').single<Settings>(),
     from ? supabase.from('invoices').select('*, invoice_items(*)').eq('id', from).single<Invoice & { invoice_items: InvoiceItem[] }>() : Promise.resolve({ data: null }),
   ])
   if (from && (!source || source.kind !== SOURCE_KIND[kind])) notFound()
 
+  if (!settings) notFound()
   if (!parties?.length || !products?.length) {
     return (
       <Empty className="border">
@@ -45,7 +46,7 @@ export async function NewDocumentPage({ kind, from }: { kind: Kind; from?: strin
   return (
     <>
       <PageHeader title={`New ${cfg.label.toLowerCase()}`} />
-      <DocumentEditor kind={kind} parties={parties} products={products} sellerState={settings?.state_code ?? '36'} prefill={prefill} />
+      <DocumentEditor kind={kind} parties={parties} products={products} settings={settings} prefill={prefill} />
     </>
   )
 }

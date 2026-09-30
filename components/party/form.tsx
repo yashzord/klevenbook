@@ -5,6 +5,7 @@ import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Field, FormError, FormSuccess, SubmitButton } from '@/components/form'
 import { STATES } from '@/lib/states'
 import type { Vendor } from '@/lib/types'
+import { BankDetails, PartyBlock } from '@/components/documents/paper'
 import { addParty, updateParty, type PartyTable } from './actions'
 
 export function PartyForm({ table, party }: { table: PartyTable; party?: Vendor }) {
@@ -12,6 +13,15 @@ export function PartyForm({ table, party }: { table: PartyTable; party?: Vendor 
   const [state, action] = useActionState(party ? updateParty.bind(null, table, party.id) : addParty.bind(null, table), {})
   // key={state.ok} remounts the form after an add, which clears every field.
   const [stateCode, setStateCode] = useState(party?.state_code ?? '36')
+  // What is typed right now, to show how it will print.
+  const [live, setLive] = useState({ name: party?.name ?? '', gstin: party?.gstin ?? null, address: party?.address ?? null, phone: party?.phone ?? null,
+    bank_name: party?.bank_name ?? null, bank_account: party?.bank_account ?? null, bank_ifsc: party?.bank_ifsc ?? null, upi_id: party?.upi_id ?? null })
+  function onFormChange(e: React.FormEvent<HTMLFormElement>) {
+    const f = new FormData(e.currentTarget)
+    const text = (k: string) => String(f.get(k) ?? '').trim() || null
+    setLive({ name: text('name') ?? '', gstin: text('gstin')?.toUpperCase() ?? null, address: text('address'), phone: text('phone'),
+      bank_name: text('bank_name'), bank_account: text('bank_account'), bank_ifsc: text('bank_ifsc')?.toUpperCase() ?? null, upi_id: text('upi_id') })
+  }
 
   function onGstin(e: React.ChangeEvent<HTMLInputElement>) {
     const code = e.target.value.slice(0, 2)
@@ -19,7 +29,7 @@ export function PartyForm({ table, party }: { table: PartyTable; party?: Vendor 
   }
 
   return (
-    <form key={party ? party.id : state.ok ?? 0} action={action} className="grid gap-4 sm:grid-cols-6">
+    <form key={party ? party.id : state.ok ?? 0} action={action} onChange={onFormChange} className="grid gap-4 sm:grid-cols-6">
       <Field label={`${noun} name`} className="sm:col-span-3"><Input name="name" required defaultValue={party?.name} placeholder={table === 'vendors' ? 'Medisurge Distributors' : 'Apollo Clinic, Kukatpally'} /></Field>
       <Field label="GSTIN (optional)" className="sm:col-span-3"><Input name="gstin" maxLength={15} defaultValue={party?.gstin ?? ''} onChange={onGstin} className="uppercase" placeholder="36AAACB2894G1ZM" /></Field>
       <Field label="State" className="sm:col-span-3">
@@ -38,6 +48,13 @@ export function PartyForm({ table, party }: { table: PartyTable; party?: Vendor 
           <Field label="UPI ID (optional)" className="sm:col-span-3"><Input name="upi_id" defaultValue={party?.upi_id ?? ''} /></Field>
         </>
       )}
+      <div className="border-t pt-4 sm:col-span-6">
+        <p className="mb-2 text-xs text-muted-foreground">How it prints on a document</p>
+        <div className="grid gap-3 md:grid-cols-2">
+          <PartyBlock kind={table === 'vendors' ? 'purchase' : 'invoice'} party={{ ...live, state_code: stateCode }} />
+          {table === 'vendors' && <BankDetails title="Vendor's bank details" bank={live} className="mt-0" />}
+        </div>
+      </div>
       <div className="space-y-3 sm:col-span-6">
         <FormError message={state.error} />
         <FormSuccess message={!party && state.ok ? `${noun} added.` : undefined} />

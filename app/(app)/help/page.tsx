@@ -44,6 +44,7 @@ const sections = [
   {
     title: 'Printing and sending',
     body: [
+      ['Preview while you type', 'On a new quotation, invoice, challan or purchase bill, the page on the right shows exactly what will print, and changes as you type. On a phone, press Preview. Settings shows a sample the same way.'],
       ['WhatsApp', 'On any document press "Send on WhatsApp". WhatsApp opens with a message and a private link to the document, addressed to the customer\'s number. They can view and print it without logging in.'],
       ['PDF', 'On any document press "Print or save as PDF". In the print window choose "Save as PDF" as the printer.'],
       ['For your CA', 'On the Invoices page, pick a from and to date and press "Download CSV". It opens in Excel and has every invoice with taxable value and tax split, ready for GSTR-1.'],

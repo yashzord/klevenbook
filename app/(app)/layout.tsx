@@ -17,8 +17,8 @@ export default function AppLayout({ children }: LayoutProps<'/'>) {
             <Separator orientation="vertical" className="mr-1 data-[orientation=vertical]:h-4" />
             <SectionName />
           </header>
-          {/* SidebarInset is the <main> landmark, so this is a plain container. */}
-          <div id="main" className="mx-auto w-full max-w-5xl p-4 sm:p-6 lg:p-8">{children}</div>
+          {/* SidebarInset is the <main> landmark, so this is a plain container. Pages with a side-by-side preview mark themselves data-wide. */}
+          <div id="main" className="@container/page mx-auto w-full max-w-5xl p-4 has-data-wide:max-w-[1500px] sm:p-6 lg:p-8">{children}</div>
         </SidebarInset>
       </SidebarProvider>
     </TooltipProvider>

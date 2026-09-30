@@ -15,9 +15,9 @@ export async function EditDocumentPage({ kind, id }: { kind: Kind; id: string })
     supabase.from('invoices').select('*, invoice_items(*)').eq('id', id).single<Invoice & { invoice_items: InvoiceItem[] }>(),
     supabase.from(cfg.party === 'vendor' ? 'vendors' : 'customers').select('*').order('name').returns<Customer[]>(),
     supabase.from('products').select('*').order('name').returns<Product[]>(),
-    supabase.from('settings').select('state_code').single<Pick<Settings, 'state_code'>>(),
+    supabase.from('settings').select('*').single<Settings>(),
   ])
-  if (!doc || doc.kind !== kind || !parties || !products) notFound()
+  if (!doc || doc.kind !== kind || !parties || !products || !settings) notFound()
 
   const back = <Button asChild variant="ghost" className="-ml-3 mb-2 text-muted-foreground"><Link href={`${cfg.path}/${doc.id}`}><ArrowLeft /> Back to {doc.number}</Link></Button>
   if (doc.cancelled_at) {
@@ -37,7 +37,7 @@ export async function EditDocumentPage({ kind, id }: { kind: Kind; id: string })
         kind={kind}
         parties={parties.filter((p) => !p.hidden || p.id === (doc.customer_id ?? doc.vendor_id))}
         products={products}
-        sellerState={settings?.state_code ?? '36'}
+        settings={settings}
         prefill={{
           party_id: doc.customer_id ?? doc.vendor_id ?? '',
           source_id: '',

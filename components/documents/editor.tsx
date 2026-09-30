@@ -11,8 +11,10 @@ import { DatePicker } from '@/components/date-picker'
 import { Field, FormError, SubmitButton } from '@/components/form'
 import { gstType, inr, lineTotals, splitTax } from '@/lib/gst'
 import { KINDS, type Kind } from '@/lib/documents'
-import type { Customer, Product } from '@/lib/types'
+import type { Customer, Product, Settings } from '@/lib/types'
 import { createDocument, updateDocument } from './actions'
+import { DocumentPaper, type PaperDoc, type PaperItem, type PaperParty } from './paper'
+import { PreviewDialog, PreviewInline } from './preview'
 
 export type Row = { key: number; product_id: string; qty: string; rate: string; batch: string; rateTouched: boolean }
 export type Prefill = { party_id: string; rows: Omit<Row, 'key' | 'rateTouched'>[]; source_id: string; source_number: string; reference: string }
@@ -22,9 +24,10 @@ export type Existing = { id: string; number: string; date: string; valid_until: 
 const blank = (key: number): Row => ({ key, product_id: '', qty: '1', rate: '', batch: '', rateTouched: false })
 const plusDays = (d: number) => new Date(Date.now() + d * 86400000).toISOString().slice(0, 10)
 
-export function DocumentEditor({ kind, parties, products, sellerState, prefill, existing }: {
-  kind: Kind; parties: Customer[]; products: Product[]; sellerState: string; prefill?: Prefill; existing?: Existing
+export function DocumentEditor({ kind, parties, products, settings, prefill, existing }: {
+  kind: Kind; parties: (Customer & PaperParty)[]; products: Product[]; settings: Settings; prefill?: Prefill; existing?: Existing
 }) {
+  const sellerState = settings.state_code
   const cfg = KINDS[kind]
   const [state, action] = useActionState(existing ? updateDocument.bind(null, existing.id) : createDocument, {})
   const [partyId, setPartyId] = useState(prefill?.party_id ?? '')
@@ -32,6 +35,10 @@ export function DocumentEditor({ kind, parties, products, sellerState, prefill, 
     prefill?.rows.length ? prefill.rows.map((r, i) => ({ ...r, key: i + 1, rateTouched: true })) : [blank(1), blank(2), blank(3)]
   )
   const [nextKey, setNextKey] = useState(rows.length + 1)
+  // Header fields, mirrored here only so the preview can show them as she types.
+  const [date, setDate] = useState(existing?.date ?? plusDays(0))
+  const [validUntil, setValidUntil] = useState(existing?.valid_until ?? plusDays(30))
+  const [text, setText] = useState({ reference: prefill?.reference ?? '', eway_bill: existing?.eway_bill ?? '', packages: existing?.packages == null ? '' : String(existing.packages), notes: existing?.notes ?? '' })
   const byId = useMemo(() => new Map(products.map((p) => [p.id, p])), [products])
   const partyOptions = useMemo(() => parties.map((c) => ({ value: c.id, label: c.name, hint: c.gstin ?? undefined })), [parties])
   const productOptions = useMemo(() => products.map((p) => ({ value: p.id, label: p.name, hint: kind === 'purchase' || !cfg.money ? undefined : inr(p.price) })), [products, kind, cfg.money])
@@ -52,35 +59,50 @@ export function DocumentEditor({ kind, parties, products, sellerState, prefill, 
     const p = byId.get(r.product_id)
     const qty = Number(r.qty), rate = r.rate === '' && p && kind !== 'purchase' ? Number(p.price) : Number(r.rate)
     if (!p || !(qty > 0) || !(rate >= 0)) return null
-    return { qty, ...lineTotals(qty, rate, Number(p.gst_rate)) }
+    return { qty, rate, ...lineTotals(qty, rate, cfg.money ? Number(p.gst_rate) : 0) }
   })
   const filled = lines.filter(Boolean).length
   const noHsn = kind === 'purchase' ? 0 : rows.filter((r) => { const p = byId.get(r.product_id); return p && !p.hsn }).length
   const cols = kind === 'challan'
-    ? 'grid-cols-[1fr_1fr_40px] sm:grid-cols-[1fr_170px_90px_40px]'
-    : 'grid-cols-[1fr_1fr_40px] sm:grid-cols-[1fr_90px_120px_110px_40px]'
+    ? 'grid-cols-[1fr_1fr_40px] @2xl/form:grid-cols-[1fr_170px_90px_40px]'
+    : 'grid-cols-[1fr_1fr_40px] @2xl/form:grid-cols-[1fr_90px_120px_110px_40px]'
   const totalQty = lines.reduce((s, l) => s + (l?.qty ?? 0), 0)
   const subtotal = Math.round(lines.reduce((s, l) => s + (l?.amount ?? 0), 0) * 100) / 100
   const tax = Math.round(lines.reduce((s, l) => s + (l?.tax ?? 0), 0) * 100) / 100
   const split = splitTax(tax, type)
   const total = Math.round((subtotal + tax) * 100) / 100
 
+  // What the page will look like if saved now. The server recomputes all of it on save.
+  const previewItems: PaperItem[] = rows.flatMap((r, i) => {
+    const p = byId.get(r.product_id), l = lines[i]
+    return p && l ? [{ id: String(r.key), description: p.name, hsn: p.hsn, unit: p.unit, qty: l.qty, rate: l.rate, gst_rate: cfg.money ? Number(p.gst_rate) : 0, amount: l.amount, tax: l.tax, batch: r.batch || null }] : []
+  })
+  const previewDoc: PaperDoc = {
+    kind, number: existing?.number ?? 'Assigned on save', date, gst_type: type, subtotal, ...split, total,
+    valid_until: kind === 'quotation' ? validUntil : null,
+    due_date: kind === 'invoice' && date ? new Date(new Date(date + 'T00:00:00Z').getTime() + settings.payment_terms_days * 86400000).toISOString().slice(0, 10) : null,
+    reference: text.reference || null, eway_bill: text.eway_bill || null, packages: text.packages === '' ? null : Number(text.packages),
+    notes: text.notes || null, cancelled_at: null, cancel_reason: null,
+  }
+  const previewNote = existing ? 'This is how it will print once you save the changes.' : 'This is how it will print. The number is assigned when you create it.'
+  const paper = <DocumentPaper doc={previewDoc} party={party ?? null} items={previewItems} settings={settings} className="p-10" preview />
+
   return (
-    <form action={action} className="grid gap-6 lg:grid-cols-[1fr_300px]">
+    <form data-wide action={action} onChange={(e) => { const f = new FormData(e.currentTarget); setText({ reference: String(f.get('reference') ?? ''), eway_bill: String(f.get('eway_bill') ?? ''), packages: String(f.get('packages') ?? ''), notes: String(f.get('notes') ?? '') }) }} className="grid gap-6 @4xl/page:grid-cols-2">
       <input type="hidden" name="kind" value={kind} />
       <input type="hidden" name="source_id" value={prefill?.source_id ?? ''} />
       <input type="hidden" name="items" value={JSON.stringify(rows.map(({ product_id, qty, rate, batch }) => ({ product_id, qty, rate, batch })))} />
-      <div className="min-w-0 space-y-6">
+      <div className="@container/form min-w-0 space-y-6">
         {!existing && prefill?.source_number && (
           <Alert variant="info"><AlertDescription>Started from {prefill.source_number}. Lines are copied in; change anything before saving.</AlertDescription></Alert>
         )}
         <Card>
-          <CardContent className="grid gap-4 sm:grid-cols-2">
+          <CardContent className="grid gap-4 @md/form:grid-cols-2">
             <Field label={kind === 'challan' ? 'Consignee (ship to)' : kind === 'purchase' ? 'Vendor' : 'Customer'}>
               <Combobox name="party_id" label={`Choose a ${partyWord}`} options={partyOptions} value={partyId} onChange={setPartyId} placeholder={`Choose a ${partyWord}`} searchPlaceholder={`Search ${partyWord}s`} empty={`No ${partyWord} by that name.`} />
             </Field>
-            <Field label={`${cfg.label} date`}><DatePicker name="date" defaultValue={existing?.date ?? plusDays(0)} /></Field>
-            {kind === 'quotation' && <Field label="Valid until"><DatePicker name="valid_until" defaultValue={existing?.valid_until ?? plusDays(30)} warnDays={120} /></Field>}
+            <Field label={`${cfg.label} date`}><DatePicker name="date" defaultValue={date} onChange={setDate} /></Field>
+            {kind === 'quotation' && <Field label="Valid until"><DatePicker name="valid_until" defaultValue={validUntil} onChange={setValidUntil} warnDays={120} /></Field>}
             <Field label={kind === 'quotation' ? 'Reference (optional)' : kind === 'purchase' ? "Vendor's bill number" : 'Customer PO number (optional)'}>
               <Input name="reference" required={kind === 'purchase'} defaultValue={prefill?.reference ?? ''} />
             </Field>
@@ -94,7 +116,7 @@ export function DocumentEditor({ kind, parties, products, sellerState, prefill, 
         </Card>
 
         <Card className="gap-0 py-0">
-          <div className={`hidden gap-2 border-b bg-muted px-4 py-2.5 text-sm font-medium text-muted-foreground sm:grid ${cols}`}>
+          <div className={`hidden gap-2 border-b bg-muted px-4 py-2.5 text-sm font-medium text-muted-foreground @2xl/form:grid ${cols}`}>
             <span>Product</span>
             {kind === 'challan' && <span>Batch or serial</span>}
             <span>Qty</span>
@@ -105,13 +127,13 @@ export function DocumentEditor({ kind, parties, products, sellerState, prefill, 
           <ul className="divide-y">
             {rows.map((r, i) => (
               <li key={r.key} className={`grid items-center gap-2 px-4 py-3 ${cols}`}>
-                <div className="col-span-full min-w-0 sm:col-span-1">
+                <div className="col-span-full min-w-0 @2xl/form:col-span-1">
                   <Combobox label={`Product, row ${i + 1}`} options={productOptions} value={r.product_id} onChange={(v) => pickProduct(r.key, v)} placeholder="Choose a product" searchPlaceholder="Search products" empty="No product by that name." />
                 </div>
                 {kind === 'challan' && <Input value={r.batch} onChange={(e) => update(r.key, { batch: e.target.value })} placeholder="Batch or serial" aria-label={`Batch, row ${i + 1}`} />}
                 <Input type="number" step="any" min="0" value={r.qty} onChange={(e) => update(r.key, { qty: e.target.value })} placeholder="Qty" aria-label={`Quantity, row ${i + 1}`} />
                 {cfg.money && <Input type="number" step="0.01" min="0" value={r.rate} onChange={(e) => update(r.key, { rate: e.target.value, rateTouched: true })} placeholder="Rate" aria-label={`Rate, row ${i + 1}`} />}
-                {cfg.money && <span className={`order-last col-span-full text-right text-sm tabular-nums sm:order-none sm:col-span-1 ${lines[i] ? '' : 'hidden sm:inline'}`}>{lines[i] ? <><span className="text-muted-foreground sm:hidden">Amount </span>{inr(lines[i]!.amount)}</> : <span className="text-muted-foreground">–</span>}</span>}
+                {cfg.money && <span className={`order-last col-span-full text-right text-sm tabular-nums @2xl/form:order-none @2xl/form:col-span-1 ${lines[i] ? '' : 'hidden @2xl/form:inline'}`}>{lines[i] ? <><span className="text-muted-foreground @2xl/form:hidden">Amount </span>{inr(lines[i]!.amount)}</> : <span className="text-muted-foreground">–</span>}</span>}
                 <Button type="button" variant="ghost" size="icon" onClick={() => setRows((rs) => rs.length > 1 ? rs.filter((x) => x.key !== r.key) : rs)} aria-label={`Remove row ${i + 1}`} className="justify-self-end text-muted-foreground hover:bg-destructive/10 hover:text-destructive"><X /></Button>
               </li>
             ))}
@@ -127,7 +149,8 @@ export function DocumentEditor({ kind, parties, products, sellerState, prefill, 
         <FormError message={state.error} />
       </div>
 
-      <Card className="h-fit lg:sticky lg:top-6">
+      <div className="min-w-0 space-y-6 @4xl/page:sticky @4xl/page:top-4 @4xl/page:max-h-[calc(100svh-2rem)] @4xl/page:self-start @4xl/page:overflow-y-auto @4xl/page:p-0.5 [scrollbar-width:thin]">
+      <Card className="h-fit">
         <CardContent className="space-y-4">
           {noHsn > 0 && (
             <Alert variant="warning">
@@ -137,9 +160,9 @@ export function DocumentEditor({ kind, parties, products, sellerState, prefill, 
               </AlertDescription>
             </Alert>
           )}
-          <p className="text-sm text-muted-foreground">{filled} {filled === 1 ? 'line' : 'lines'}{cfg.money && party ? ` · ${type === 'igst' ? 'IGST' : 'CGST + SGST'}` : ''}</p>
-          {cfg.money ? (
-            <dl className="space-y-2 text-sm tabular-nums">
+          {/* The breakdown is only needed when the preview, which shows it, is not beside the form. */}
+          {cfg.money && (
+            <dl className="space-y-2 text-sm tabular-nums @4xl/page:hidden">
               <div className="flex justify-between"><dt className="text-muted-foreground">Taxable value</dt><dd>{inr(subtotal)}</dd></div>
               {type === 'igst' ? (
                 <div className="flex justify-between"><dt className="text-muted-foreground">IGST</dt><dd>{inr(split.igst)}</dd></div>
@@ -149,16 +172,22 @@ export function DocumentEditor({ kind, parties, products, sellerState, prefill, 
                   <div className="flex justify-between"><dt className="text-muted-foreground">SGST</dt><dd>{inr(split.sgst)}</dd></div>
                 </>
               )}
-              <div className="flex items-baseline justify-between border-t pt-3"><dt className="font-medium">Total</dt><dd className="font-heading text-2xl font-semibold tracking-tight">{inr(total)}</dd></div>
             </dl>
-          ) : (
-            <dl className="tabular-nums"><div className="flex items-baseline justify-between"><dt className="font-medium">Total quantity</dt><dd className="font-heading text-2xl font-semibold tracking-tight">{totalQty}</dd></div></dl>
           )}
-          {existing
-            ? <SubmitButton pendingText="Saving" size="lg" className="w-full">Save changes</SubmitButton>
-            : <SubmitButton pendingText="Creating" size="lg" className="w-full">Create {cfg.label.toLowerCase()}</SubmitButton>}
+          <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+            <div>
+              <p className="text-sm text-muted-foreground">{cfg.money ? 'Total' : 'Total quantity'} · {filled} {filled === 1 ? 'line' : 'lines'}{cfg.money ? ` · ${type === 'igst' ? 'IGST' : 'CGST + SGST'}` : ''}</p>
+              <p className="font-heading text-3xl font-semibold tracking-tight tabular-nums">{cfg.money ? inr(total) : totalQty}</p>
+            </div>
+            {existing
+              ? <SubmitButton pendingText="Saving" size="lg" className="grow @4xl/page:grow-0">Save changes</SubmitButton>
+              : <SubmitButton pendingText="Creating" size="lg" className="grow @4xl/page:grow-0">Create {cfg.label.toLowerCase()}</SubmitButton>}
+          </div>
+          <PreviewDialog note={previewNote} className="w-full @4xl/page:hidden">{paper}</PreviewDialog>
         </CardContent>
       </Card>
+      <div className="hidden @4xl/page:block"><PreviewInline>{paper}</PreviewInline><p className="mt-2 text-xs text-muted-foreground">{previewNote}</p></div>
+      </div>
     </form>
   )
 }

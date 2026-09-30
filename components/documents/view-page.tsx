@@ -3,7 +3,8 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { KINDS, PAYABLE, type Kind } from '@/lib/documents'
 import type { Customer, Invoice, InvoiceItem, Payment, Settings, Vendor } from '@/lib/types'
-import { DocumentView, type CopyKind } from './view'
+import { DocumentView } from './view'
+import type { CopyKind } from './paper'
 import { PaymentsPanel } from './payments'
 
 export async function DocumentPage({ kind, id, copy }: { kind: Kind; id: string; copy?: string }) {

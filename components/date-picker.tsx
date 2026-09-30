@@ -11,7 +11,7 @@ const fromIso = (s: string) => { const d = new Date(s + 'T00:00:00'); return Num
 
 // A calendar with month names, so 05/09 can never be read as the wrong month.
 // Submits an ISO date (yyyy-mm-dd) through a hidden input, and warns when the date is far from today.
-export function DatePicker({ name, defaultValue, warnDays = 30, quiet = false, className }: { name: string; defaultValue: string; warnDays?: number; quiet?: boolean; className?: string }) {
+export function DatePicker({ name, defaultValue, warnDays = 30, quiet = false, className, onChange }: { name: string; defaultValue: string; warnDays?: number; quiet?: boolean; className?: string; onChange?: (iso: string) => void }) {
   const [value, setValue] = useState(defaultValue)
   const [open, setOpen] = useState(false)
   const picked = fromIso(value)
@@ -29,7 +29,7 @@ export function DatePicker({ name, defaultValue, warnDays = 30, quiet = false, c
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
-          <Calendar mode="single" captionLayout="dropdown" selected={picked} defaultMonth={picked} onSelect={(d) => { if (d) { setValue(toIso(d)); setOpen(false) } }} />
+          <Calendar mode="single" captionLayout="dropdown" selected={picked} defaultMonth={picked} onSelect={(d) => { if (d) { setValue(toIso(d)); onChange?.(toIso(d)); setOpen(false) } }} />
         </PopoverContent>
       </Popover>
       {!quiet && picked && (
