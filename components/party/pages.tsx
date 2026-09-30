@@ -6,17 +6,17 @@ import { STATES } from '@/lib/states'
 import type { Customer, Vendor } from '@/lib/types'
 import { DeleteButton } from '@/components/delete-button'
 import { PartyForm } from './form'
-import { deleteParty, type PartyTable } from './actions'
+import { deleteParty, setHidden, type PartyTable } from './actions'
 
 const COPY: Record<PartyTable, { title: string; hint: string; path: string; noun: string }> = {
-  customers: { title: 'Customers', hint: 'Who you sell to. Their name, address and GSTIN print on every document.', path: '/customers', noun: 'customer' },
+  customers: { title: 'Customers', hint: 'Who you sell to. Their name, address and GSTIN print on every document. Hide a name to drop it from the pickers.', path: '/customers', noun: 'customer' },
   vendors: { title: 'Vendors', hint: 'Who you buy from, with their bank details. Their bills go under Purchases so your CA can claim input tax.', path: '/vendors', noun: 'vendor' },
 }
 
 export async function PartyListPage({ table }: { table: PartyTable }) {
   const c = COPY[table]
   const supabase = await createClient()
-  const { data, error } = await supabase.from(table).select('*').order('name').returns<Customer[]>()
+  const { data, error } = await supabase.from(table).select('*').order('hidden').order('name').returns<Customer[]>()
   if (error) throw error
   return (
     <>
@@ -28,13 +28,16 @@ export async function PartyListPage({ table }: { table: PartyTable }) {
           <thead className="bg-tint text-left text-ink-soft"><tr><th className="px-4 py-2 font-medium">Name</th><th className="px-4 py-2 font-medium">GSTIN</th><th className="hidden px-4 py-2 font-medium sm:table-cell">State</th><th className="hidden px-4 py-2 font-medium sm:table-cell">Phone</th><th className="px-4 py-2"><span className="sr-only">Actions</span></th></tr></thead>
           <tbody>
             {data.map((p) => (
-              <tr key={p.id} className="border-t border-line hover:bg-tint/60">
-                <td className="px-4 py-2"><Link href={`${c.path}/${p.id}`} className="font-medium text-brand-deep hover:underline">{p.name}</Link></td>
+              <tr key={p.id} className={`border-t border-line hover:bg-tint/60 ${p.hidden ? 'text-ink-soft' : ''}`}>
+                <td className="px-4 py-2"><Link href={`${c.path}/${p.id}`} className="font-medium text-brand-deep hover:underline">{p.name}</Link>{p.hidden && <span className="ml-2 rounded bg-tint px-1.5 py-0.5 text-xs">Hidden</span>}</td>
                 <td className="whitespace-nowrap px-4 py-2">{p.gstin ?? <span className="text-ink-soft">Unregistered</span>}</td>
                 <td className="hidden px-4 py-2 sm:table-cell">{STATES[p.state_code]}</td><td className="hidden px-4 py-2 sm:table-cell">{p.phone}</td>
                 <td className="px-2 py-1">
                   <div className="flex flex-wrap items-center justify-end gap-1">
                     <Link href={`${c.path}/${p.id}`} className="inline-flex min-h-11 items-center rounded-md px-3 text-sm font-medium text-brand transition hover:bg-tint">Edit</Link>
+                    <form action={setHidden.bind(null, table, p.id, !p.hidden)}>
+                      <button className="min-h-11 rounded-md px-3 text-sm text-ink-soft transition hover:bg-tint hover:text-ink">{p.hidden ? 'Show' : 'Hide'}</button>
+                    </form>
                     <DeleteButton action={deleteParty.bind(null, table, p.id)} label={c.noun} compact />
                   </div>
                 </td>

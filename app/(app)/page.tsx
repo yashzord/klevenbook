@@ -15,7 +15,7 @@ export const metadata: Metadata = { title: 'Home' }
 export default async function HomePage() {
   const supabase = await createClient()
   const [{ data: settings }, { count: products }, { count: customers }, { count: invoices }, { count: paymentsCount }, { data: recent }, { data: open }, { data: openPurchases }] = await Promise.all([
-    supabase.from('settings').select('business_name, gstin').single<{ business_name: string; gstin: string | null }>(),
+    supabase.from('settings').select('business_name, gstin, bank_name, upi_id').single<{ business_name: string; gstin: string | null; bank_name: string | null; upi_id: string | null }>(),
     supabase.from('products').select('*', { count: 'exact', head: true }),
     supabase.from('customers').select('*', { count: 'exact', head: true }),
     supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('kind', 'invoice'),
@@ -32,6 +32,7 @@ export default async function HomePage() {
 
   const steps = [
     { done: !!settings?.gstin && settings.business_name !== 'My Business', href: '/settings', title: 'Add your business details', why: 'Name, GSTIN and address print at the top of every document.' },
+    { done: !!(settings?.bank_name || settings?.upi_id), href: '/settings', title: 'Add your bank details', why: 'Printed on invoices and quotations so customers can pay straight from the PDF.' },
     { done: (products ?? 0) > 0, href: '/products', title: 'Add a product', why: 'Name, HSN code, GST rate and list price. You can change the price on any document.' },
     { done: (customers ?? 0) > 0, href: '/customers', title: 'Add a customer', why: 'Their name, address and GSTIN print on every invoice.' },
     { done: (invoices ?? 0) > 0, href: '/invoices/new', title: 'Make your first invoice', why: 'Pick the customer, add lines, and print or save it as a PDF.' },
@@ -50,7 +51,7 @@ export default async function HomePage() {
           <h2 className="border-b border-line px-4 py-3 font-semibold">Getting started</h2>
           <ol className="divide-y divide-line">
             {steps.map((s, i) => (
-              <li key={s.href} className={`flex items-start gap-4 px-4 py-3 ${s.done ? 'text-ink-soft' : ''}`}>
+              <li key={s.title} className={`flex items-start gap-4 px-4 py-3 ${s.done ? 'text-ink-soft' : ''}`}>
                 <span aria-hidden className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${s.done ? 'bg-leaf text-white' : s === firstOpen ? 'bg-brand text-white' : 'border border-line'}`}>{s.done ? <IconCheck /> : i + 1}</span>
                 <div className="flex-1">
                   <p className={s.done ? 'line-through' : 'font-medium'}>{s.title}</p>

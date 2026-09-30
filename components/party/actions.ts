@@ -60,7 +60,15 @@ export async function updateParty(table: PartyTable, id: string, _prev: ActionSt
 export async function deleteParty(table: PartyTable, id: string): Promise<ActionState> {
   const supabase = await createClient()
   const { error } = await supabase.from(table).delete().eq('id', id)
-  if (error) return { error: error.code === '23503' ? 'There are documents for this name, so it cannot be deleted.' : `Could not delete: ${error.message}` }
+  if (error) return { error: error.code === '23503' ? 'There are documents for this name, so it cannot be deleted. Press Hide instead.' : `Could not delete: ${error.message}` }
   revalidatePath(PATH[table])
   redirect(PATH[table])
+}
+
+// Hidden names drop out of the pickers on new documents; old documents keep them.
+export async function setHidden(table: PartyTable, id: string, hidden: boolean) {
+  const supabase = await createClient()
+  const { error } = await supabase.from(table).update({ hidden }).eq('id', id)
+  if (error) throw new Error(`Could not update: ${error.message}`)
+  revalidatePath(PATH[table])
 }

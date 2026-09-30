@@ -9,7 +9,7 @@ export async function NewDocumentPage({ kind, from }: { kind: Kind; from?: strin
   const cfg = KINDS[kind]
   const supabase = await createClient()
   const [{ data: parties }, { data: products }, { data: settings }, { data: source }] = await Promise.all([
-    supabase.from(cfg.party === 'vendor' ? 'vendors' : 'customers').select('*').order('name').returns<Customer[]>(),
+    supabase.from(cfg.party === 'vendor' ? 'vendors' : 'customers').select('*').eq('hidden', false).order('name').returns<Customer[]>(),
     supabase.from('products').select('*').order('name').returns<Product[]>(),
     supabase.from('settings').select('state_code').single<Pick<Settings, 'state_code'>>(),
     from ? supabase.from('invoices').select('*, invoice_items(*)').eq('id', from).single<Invoice & { invoice_items: InvoiceItem[] }>() : Promise.resolve({ data: null }),

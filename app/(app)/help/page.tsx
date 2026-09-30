@@ -17,6 +17,7 @@ const sections = [
       ['Forgot your password', 'On the sign-in page press Forgot your password. A link arrives by email, works once, and lets you set a new one.'],
       ['Made a mistake?', 'Open the document and press Edit. Change anything and save; the number, share link and payments stay the same.'],
       ['Cancelling', 'If a document should not exist at all, press "Cancel this …". It keeps its number, gets a red Cancelled stamp with your reason, and stays in the list.'],
+      ['Dates', 'Under every date you pick, the full date is written out, for example Friday, 5 September 2026. If it says a different month than you meant, fix it before saving.'],
       ['New financial year', 'In Settings, change each prefix (for example KC-INV-2027-) and set Next back to 1.'],
     ],
   },
@@ -51,7 +52,7 @@ const sections = [
     body: [
       ['List price', 'The price on a product fills in automatically on a new document. You can still change it on any line.'],
       ['Editing', 'Click a name in the Products or Customers list to change it. Documents already made keep what was on them at the time.'],
-      ['Deleting', 'Only possible if the product or customer is not on any document. Otherwise rename it instead.'],
+      ['Deleting', 'Only possible if the product or customer is not on any document. For a customer or vendor that is, press Hide: it leaves the pickers but old documents keep it.'],
     ],
   },
 ]

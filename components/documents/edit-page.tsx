@@ -34,7 +34,7 @@ export async function EditDocumentPage({ kind, id }: { kind: Kind; id: string })
       <p className="mb-5 text-sm text-ink-soft">The number, share link and recorded payments stay the same. Everything else can change.</p>
       <DocumentEditor
         kind={kind}
-        parties={parties}
+        parties={parties.filter((p) => !p.hidden || p.id === (doc.customer_id ?? doc.vendor_id))}
         products={products}
         sellerState={settings?.state_code ?? '36'}
         prefill={{

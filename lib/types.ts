@@ -8,7 +8,7 @@ export type Settings = {
   bank_name: string | null; bank_account: string | null; bank_ifsc: string | null; upi_id: string | null; payment_terms_days: number
 }
 export type Product = { id: string; name: string; hsn: string | null; unit: string; price: string; gst_rate: string }
-export type Customer = { id: string; name: string; gstin: string | null; state_code: string; phone: string | null; address: string | null }
+export type Customer = { id: string; name: string; gstin: string | null; state_code: string; phone: string | null; address: string | null; hidden: boolean }
 export type Vendor = Customer & { bank_name: string | null; bank_account: string | null; bank_ifsc: string | null; upi_id: string | null }
 
 // Units offered on products. Nos is the usual count word on Indian invoices.

@@ -6,6 +6,7 @@ import { KINDS, type Kind } from '@/lib/documents'
 import type { Customer, Product } from '@/lib/types'
 import { createDocument, updateDocument } from './actions'
 import { IconPlus, IconX } from '@/components/icons'
+import { DateInput } from '@/components/date-input'
 
 export type Row = { key: number; product_id: string; qty: string; rate: string; batch: string; rateTouched: boolean }
 export type Prefill = { party_id: string; rows: Omit<Row, 'key' | 'rateTouched'>[]; source_id: string; source_number: string; reference: string }
@@ -45,6 +46,7 @@ export function DocumentEditor({ kind, parties, products, sellerState, prefill, 
     return { qty, ...lineTotals(qty, rate, Number(p.gst_rate)) }
   })
   const filled = lines.filter(Boolean).length
+  const noHsn = kind === 'purchase' ? 0 : rows.filter((r) => { const p = byId.get(r.product_id); return p && !p.hsn }).length
   const cols = kind === 'challan'
     ? 'grid-cols-[1fr_1fr_44px] sm:grid-cols-[1fr_160px_90px_44px]'
     : 'grid-cols-[1fr_1fr_44px] sm:grid-cols-[1fr_90px_120px_110px_44px]'
@@ -70,8 +72,8 @@ export function DocumentEditor({ kind, parties, products, sellerState, prefill, 
               {parties.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </Field>
-          <Field label={`${cfg.label} date`}><input name="date" type="date" required defaultValue={existing?.date ?? plusDays(0)} className={inputClass} /></Field>
-          {kind === 'quotation' && <Field label="Valid until"><input name="valid_until" type="date" required defaultValue={existing?.valid_until ?? plusDays(30)} className={inputClass} /></Field>}
+          <Field label={`${cfg.label} date`}><DateInput name="date" required defaultValue={existing?.date ?? plusDays(0)} /></Field>
+          {kind === 'quotation' && <Field label="Valid until"><DateInput name="valid_until" required defaultValue={existing?.valid_until ?? plusDays(30)} warnDays={120} /></Field>}
           <Field label={kind === 'quotation' ? 'Reference (optional)' : kind === 'purchase' ? "Vendor's bill number" : 'Customer PO number (optional)'}><input name="reference" required={kind === 'purchase'} defaultValue={prefill?.reference ?? ''} className={inputClass} /></Field>
           {kind === 'challan' && (
             <>
@@ -115,6 +117,11 @@ export function DocumentEditor({ kind, parties, products, sellerState, prefill, 
       </div>
 
       <aside className="h-fit rounded-lg border border-line bg-paper p-4 text-sm lg:sticky lg:top-6">
+        {noHsn > 0 && (
+          <p className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
+            {noHsn} {noHsn === 1 ? 'line has' : 'lines have'} no HSN code. B2B invoices need one. <a href="/products" target="_blank" className="font-medium underline">Add it in Products</a> before saving; the saved document picks it up.
+          </p>
+        )}
         <p className="mb-3 text-ink-soft">{filled} {filled === 1 ? 'line' : 'lines'}{cfg.money && party ? ` · ${type === 'igst' ? 'IGST' : 'CGST + SGST'}` : ''}</p>
         {cfg.money ? (
           <dl className="space-y-1.5 tabular-nums">
