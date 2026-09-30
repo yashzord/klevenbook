@@ -17,7 +17,7 @@ export default async function SharedDocumentPage({ params }: PageProps<'/share/[
   if (!data?.doc || !data.customer) notFound()
   return (
     <main className="mx-auto max-w-5xl p-4 sm:p-6">
-      <p className="no-print mb-4 flex items-center gap-2 text-sm text-ink-soft"><Image src="/icon.png" alt="" width={20} height={20} /> Shared by {data.settings.business_name}</p>
+      <p className="no-print mb-4 flex items-center gap-2 text-sm text-muted-foreground"><Image src="/icon.png" alt="" width={20} height={20} /> Shared by {data.settings.business_name}</p>
       <DocumentView doc={{ ...data.doc, customers: data.customer, invoice_items: data.items, source: data.source }} settings={data.settings} />
     </main>
   )

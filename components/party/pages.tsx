@@ -1,16 +1,21 @@
 import Link from 'next/link'
-import { IconArrowLeft } from '@/components/icons'
 import { notFound } from 'next/navigation'
+import { ArrowLeft, Eye, EyeOff, Pencil } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { STATES } from '@/lib/states'
 import type { Customer, Vendor } from '@/lib/types'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { DeleteButton } from '@/components/delete-button'
+import { PageHeader } from '@/components/page-header'
 import { PartyForm } from './form'
 import { deleteParty, setHidden, type PartyTable } from './actions'
 
 const COPY: Record<PartyTable, { title: string; hint: string; path: string; noun: string }> = {
-  customers: { title: 'Customers', hint: 'Who you sell to. Their name, address and GSTIN print on every document. Hide a name to drop it from the pickers.', path: '/customers', noun: 'customer' },
-  vendors: { title: 'Vendors', hint: 'Who you buy from, with their bank details. Their bills go under Purchases so your CA can claim input tax.', path: '/vendors', noun: 'vendor' },
+  customers: { title: 'Customers', hint: 'Who you sell to. Their name, address and GSTIN print on every document.', path: '/customers', noun: 'customer' },
+  vendors: { title: 'Vendors', hint: 'Who you buy from, with their bank details. Their bills go under Purchase bills.', path: '/vendors', noun: 'vendor' },
 }
 
 export async function PartyListPage({ table }: { table: PartyTable }) {
@@ -20,33 +25,48 @@ export async function PartyListPage({ table }: { table: PartyTable }) {
   if (error) throw error
   return (
     <>
-      <h1 className="mb-1 text-2xl font-semibold">{c.title}</h1>
-      <p className="mb-5 text-sm text-ink-soft">{c.hint}</p>
-      <PartyForm table={table} />
-      <div className="mt-6 overflow-x-auto rounded-lg border border-line bg-paper">
-        <table className="w-full text-sm">
-          <thead className="bg-tint text-left text-ink-soft"><tr><th className="px-4 py-2 font-medium">Name</th><th className="px-4 py-2 font-medium">GSTIN</th><th className="hidden px-4 py-2 font-medium sm:table-cell">State</th><th className="hidden px-4 py-2 font-medium sm:table-cell">Phone</th><th className="px-4 py-2"><span className="sr-only">Actions</span></th></tr></thead>
-          <tbody>
+      <PageHeader title={c.title} hint={c.hint} />
+      <Card>
+        <CardHeader>
+          <CardTitle>Add a {c.noun}</CardTitle>
+          <CardDescription>Type the GSTIN first if they have one; it fills in the state.</CardDescription>
+        </CardHeader>
+        <CardContent><PartyForm table={table} /></CardContent>
+      </Card>
+      <Card className="mt-6 py-0">
+        <Table>
+          <TableHeader className="bg-muted">
+            <TableRow>
+              <TableHead className="px-4">Name</TableHead><TableHead className="px-4">GSTIN</TableHead>
+              <TableHead className="hidden px-4 md:table-cell">State</TableHead><TableHead className="hidden px-4 md:table-cell">Phone</TableHead>
+              <TableHead className="px-4"><span className="sr-only">Actions</span></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {data.map((p) => (
-              <tr key={p.id} className={`border-t border-line hover:bg-tint/60 ${p.hidden ? 'text-ink-soft' : ''}`}>
-                <td className="px-4 py-2"><Link href={`${c.path}/${p.id}`} className="font-medium text-brand-deep hover:underline">{p.name}</Link>{p.hidden && <span className="ml-2 rounded bg-tint px-1.5 py-0.5 text-xs">Hidden</span>}</td>
-                <td className="whitespace-nowrap px-4 py-2">{p.gstin ?? <span className="text-ink-soft">Unregistered</span>}</td>
-                <td className="hidden px-4 py-2 sm:table-cell">{STATES[p.state_code]}</td><td className="hidden px-4 py-2 sm:table-cell">{p.phone}</td>
-                <td className="px-2 py-1">
+              <TableRow key={p.id} className={p.hidden ? 'text-muted-foreground' : ''}>
+                <TableCell className="px-4 whitespace-normal">
+                  <Link href={`${c.path}/${p.id}`} className="font-medium text-primary hover:underline">{p.name}</Link>
+                  {p.hidden && <Badge variant="secondary" className="ml-2">Hidden</Badge>}
+                </TableCell>
+                <TableCell className="px-4">{p.gstin ?? <span className="text-muted-foreground">Unregistered</span>}</TableCell>
+                <TableCell className="hidden px-4 md:table-cell">{STATES[p.state_code]}</TableCell>
+                <TableCell className="hidden px-4 md:table-cell">{p.phone}</TableCell>
+                <TableCell className="px-2 py-1.5">
                   <div className="flex flex-wrap items-center justify-end gap-1">
-                    <Link href={`${c.path}/${p.id}`} className="inline-flex min-h-11 items-center rounded-md px-3 text-sm font-medium text-brand transition hover:bg-tint">Edit</Link>
+                    <Button asChild variant="ghost" size="sm"><Link href={`${c.path}/${p.id}`}><Pencil /> Edit</Link></Button>
                     <form action={setHidden.bind(null, table, p.id, !p.hidden)}>
-                      <button className="min-h-11 rounded-md px-3 text-sm text-ink-soft transition hover:bg-tint hover:text-ink">{p.hidden ? 'Show' : 'Hide'}</button>
+                      <Button type="submit" variant="ghost" size="sm" className="text-muted-foreground">{p.hidden ? <><Eye /> Show</> : <><EyeOff /> Hide</>}</Button>
                     </form>
                     <DeleteButton action={deleteParty.bind(null, table, p.id)} label={c.noun} compact />
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-            {data.length === 0 && <tr><td className="px-4 py-6 text-center text-ink-soft" colSpan={5}>No {c.title.toLowerCase()} yet. Add your first one above.</td></tr>}
-          </tbody>
-        </table>
-      </div>
+            {data.length === 0 && <TableRow><TableCell colSpan={5} className="px-4 py-8 text-center text-muted-foreground">No {c.title.toLowerCase()} yet. Add your first one above.</TableCell></TableRow>}
+          </TableBody>
+        </Table>
+      </Card>
     </>
   )
 }
@@ -58,11 +78,11 @@ export async function PartyEditPage({ table, id }: { table: PartyTable; id: stri
   if (!party) notFound()
   return (
     <>
-      <Link href={c.path} className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-ink"><IconArrowLeft /> All {c.title.toLowerCase()}</Link>
-      <h1 className="mb-1 mt-2 text-2xl font-semibold">{party.name}</h1>
-      <p className="mb-5 text-sm text-ink-soft">Changes show on new documents. Documents already made keep the old details.</p>
-      <PartyForm table={table} party={party} />
-      <div className="mt-4"><DeleteButton action={deleteParty.bind(null, table, party.id)} label={c.noun} /></div>
+      <Button asChild variant="ghost" className="-ml-3 mb-2 text-muted-foreground"><Link href={c.path}><ArrowLeft /> All {c.title.toLowerCase()}</Link></Button>
+      <PageHeader title={party.name} hint="Changes show on new documents. Documents already made keep the old details.">
+        <DeleteButton action={deleteParty.bind(null, table, party.id)} label={c.noun} />
+      </PageHeader>
+      <Card><CardContent><PartyForm table={table} party={party} /></CardContent></Card>
     </>
   )
 }

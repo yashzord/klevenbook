@@ -4,6 +4,13 @@ import { createClient } from '@/lib/supabase/server'
 import { inr } from '@/lib/gst'
 import { formatDate } from '@/lib/format'
 import { sumPaid } from '@/lib/payments'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { PageHeader } from '@/components/page-header'
+import { Stat } from '@/components/stat'
 import { PrintButton } from '@/components/documents/print-button'
 
 export const metadata: Metadata = { title: 'Outstanding' }
@@ -50,54 +57,51 @@ export default async function OutstandingPage({ searchParams }: PageProps<'/outs
   }
   const list = [...groups.values()].sort((a, b) => b.due - a.due)
   const grand = Math.round(list.reduce((s, g) => s + g.due, 0) * 100) / 100
-  const tab = (s: Side, label: string) => (
-    <Link href={`/outstanding?side=${s}`} className={`inline-flex min-h-11 items-center rounded-md px-4 text-sm font-medium transition ${side === s ? 'bg-tint text-brand-deep' : 'text-ink-soft hover:bg-tint'}`}>{label}</Link>
-  )
-
   return (
     <>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Outstanding</h1>
-          <p className="text-sm text-ink-soft">Unpaid balances by name, largest first. Updated the moment a payment is recorded.</p>
-        </div>
+      <PageHeader title="Outstanding" hint="Unpaid balances by name, largest first. Updated the moment a payment is recorded.">
         <PrintButton />
-      </div>
-      <nav className="no-print mb-5 flex gap-1" aria-label="Outstanding side">{tab('customers', 'Customers')}{tab('vendors', 'Vendors')}</nav>
+      </PageHeader>
+      <nav className="no-print mb-5 inline-flex gap-1 rounded-lg bg-muted p-1" aria-label="Outstanding side">
+        {(['customers', 'vendors'] as Side[]).map((k) => (
+          <Button key={k} asChild size="sm" variant={side === k ? 'outline' : 'ghost'} className="capitalize"><Link href={`/outstanding?side=${k}`}>{k}</Link></Button>
+        ))}
+      </nav>
 
-      <div className="mb-4 flex items-baseline justify-between rounded-lg border border-line bg-paper px-4 py-3">
-        <h2 className="font-semibold">{cfg.title}</h2>
-        <p className="text-lg font-semibold tabular-nums">{inr(grand)}</p>
-      </div>
+      <div className="mb-4 max-w-sm"><Stat label={cfg.title} value={inr(grand)} note={`${list.length} ${list.length === 1 ? 'name' : 'names'}`} /></div>
 
       {list.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-line bg-paper p-8 text-center text-ink-soft">{cfg.empty}</p>
+        <Empty className="border"><EmptyHeader><EmptyTitle>All settled</EmptyTitle><EmptyDescription>{cfg.empty}</EmptyDescription></EmptyHeader></Empty>
       ) : (
         <div className="space-y-4">
           {list.map((g) => (
-            <section key={g.name + g.phone} className="break-inside-avoid overflow-x-auto rounded-lg border border-line bg-paper">
-              <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line bg-tint px-4 py-2">
-                <p className="font-semibold">{g.name}{g.phone && <span className="ml-2 text-sm font-normal text-ink-soft">{g.phone}</span>}</p>
-                <p className="font-semibold tabular-nums">{inr(g.due)}</p>
+            <Card key={g.name + g.phone} className="break-inside-avoid gap-0 py-0">
+              <div className="flex flex-wrap items-baseline justify-between gap-2 border-b bg-muted px-4 py-3">
+                <p className="font-medium">{g.name}{g.phone && <span className="ml-2 text-sm font-normal text-muted-foreground">{g.phone}</span>}</p>
+                <p className="font-heading font-semibold tabular-nums">{inr(g.due)}</p>
               </div>
-              <table className="w-full text-sm tabular-nums">
-                <thead className="text-left text-ink-soft">
-                  <tr><th className="px-4 py-2 font-medium">Number</th><th className="px-4 py-2 font-medium">Date</th><th className="hidden px-4 py-2 font-medium sm:table-cell">Pay by</th><th className="hidden px-4 py-2 text-right font-medium sm:table-cell">Total</th><th className="hidden px-4 py-2 text-right font-medium sm:table-cell">{cfg.paid}</th><th className="px-4 py-2 text-right font-medium">Balance</th></tr>
-                </thead>
-                <tbody>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="px-4">Number</TableHead><TableHead className="px-4">Date</TableHead>
+                    <TableHead className="hidden px-4 sm:table-cell">Pay by</TableHead><TableHead className="hidden px-4 text-right sm:table-cell">Total</TableHead>
+                    <TableHead className="hidden px-4 text-right sm:table-cell">{cfg.paid}</TableHead><TableHead className="px-4 text-right">Balance</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {g.docs.map((d) => (
-                    <tr key={d.id} className="border-t border-line">
-                      <td className="whitespace-nowrap px-4 py-2"><Link href={`${cfg.path}/${d.id}`} className="font-medium text-brand-deep hover:underline">{d.number}</Link></td>
-                      <td className="whitespace-nowrap px-4 py-2">{formatDate(d.date)}</td>
-                      <td className="hidden whitespace-nowrap px-4 py-2 sm:table-cell">{d.due_date ? formatDate(d.due_date) : '–'}{d.due_date && d.due_date < today && <span className="ml-2 rounded bg-red-50 px-1.5 py-0.5 text-xs text-red-700">Overdue</span>}</td>
-                      <td className="hidden whitespace-nowrap px-4 py-2 text-right sm:table-cell">{inr(d.total)}</td>
-                      <td className="hidden whitespace-nowrap px-4 py-2 text-right sm:table-cell">{inr(d.paid)}</td>
-                      <td className="whitespace-nowrap px-4 py-2 text-right font-medium">{inr(d.due)}</td>
-                    </tr>
+                    <TableRow key={d.id}>
+                      <TableCell className="px-4 py-3"><Link href={`${cfg.path}/${d.id}`} className="font-medium text-primary hover:underline">{d.number}</Link></TableCell>
+                      <TableCell className="px-4">{formatDate(d.date)}</TableCell>
+                      <TableCell className="hidden px-4 sm:table-cell">{d.due_date ? formatDate(d.due_date) : '–'}{d.due_date && d.due_date < today && <Badge variant="destructive" className="ml-2">Overdue</Badge>}</TableCell>
+                      <TableCell className="hidden px-4 text-right tabular-nums sm:table-cell">{inr(d.total)}</TableCell>
+                      <TableCell className="hidden px-4 text-right tabular-nums sm:table-cell">{inr(d.paid)}</TableCell>
+                      <TableCell className="px-4 text-right font-medium tabular-nums">{inr(d.due)}</TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </section>
+                </TableBody>
+              </Table>
+            </Card>
           ))}
         </div>
       )}

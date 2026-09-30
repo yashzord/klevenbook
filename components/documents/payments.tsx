@@ -1,7 +1,9 @@
 import { inr } from '@/lib/gst'
 import { formatDate } from '@/lib/format'
 import { METHODS, type Payment } from '@/lib/types'
-import { payStatus, STATUS_CLASS, STATUS_LABEL, sumPaid } from '@/lib/payments'
+import { payStatus, STATUS_LABEL, STATUS_VARIANT, sumPaid } from '@/lib/payments'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { DeleteButton } from '@/components/delete-button'
 import { PaymentForm } from './payment-form'
 import { deletePayment } from './actions'
@@ -11,29 +13,31 @@ export function PaymentsPanel({ invoiceId, total, cancelled, payments, outgoing 
   const due = Math.round((Number(total) - paid) * 100) / 100
   const status = payStatus(total, paid, cancelled)
   return (
-    <section className="no-print mx-auto mt-6 max-w-[210mm] rounded-lg border border-line bg-paper p-5">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="font-semibold">Payments</h2>
-        <span className={`rounded px-2 py-0.5 text-xs font-medium ${STATUS_CLASS[status]}`}>{STATUS_LABEL[status]}</span>
-      </div>
-      <dl className="mb-4 grid grid-cols-3 gap-3 text-sm tabular-nums">
-        <div><dt className="text-ink-soft">{outgoing ? 'Bill total' : 'Invoice total'}</dt><dd className="font-medium">{inr(total)}</dd></div>
-        <div><dt className="text-ink-soft">{outgoing ? 'Paid' : 'Received'}</dt><dd className="font-medium">{inr(paid)}</dd></div>
-        <div><dt className="text-ink-soft">{outgoing ? 'Still to pay' : 'Balance due'}</dt><dd className={`font-semibold ${due > 0 ? 'text-amber-800' : 'text-leaf-deep'}`}>{inr(Math.max(due, 0))}</dd></div>
-      </dl>
-      {payments.length > 0 && (
-        <ul className="mb-4 divide-y divide-line rounded-md border border-line text-sm">
-          {payments.map((p) => (
-            <li key={p.id} className="flex flex-wrap items-center gap-3 px-3 py-2">
-              <span className="w-24 text-ink-soft">{formatDate(p.date)}</span>
-              <span className="w-24 font-medium tabular-nums">{inr(p.amount)}</span>
-              <span className="text-ink-soft">{METHODS[p.method]}{p.reference ? `, ${p.reference}` : ''}</span>
-              <span className="ml-auto"><DeleteButton action={deletePayment.bind(null, p.id)} label="payment" /></span>
-            </li>
-          ))}
-        </ul>
-      )}
-      {cancelled ? <p className="text-sm text-ink-soft">Cancelled documents owe nothing.</p> : due > 0 ? <PaymentForm invoiceId={invoiceId} due={due} /> : <p className="text-sm text-leaf-deep">Fully paid.</p>}
-    </section>
+    <Card className="no-print mx-auto mt-6 max-w-[210mm]">
+      <CardHeader>
+        <CardTitle>Payments</CardTitle>
+        <CardAction><Badge variant={STATUS_VARIANT[status]}>{STATUS_LABEL[status]}</Badge></CardAction>
+      </CardHeader>
+      <CardContent className="gap-5">
+        <dl className="grid grid-cols-3 gap-3 tabular-nums">
+          <div><dt className="text-xs text-muted-foreground">{outgoing ? 'Bill total' : 'Invoice total'}</dt><dd className="font-heading text-lg font-semibold">{inr(total)}</dd></div>
+          <div><dt className="text-xs text-muted-foreground">{outgoing ? 'Paid' : 'Received'}</dt><dd className="font-heading text-lg font-semibold">{inr(paid)}</dd></div>
+          <div><dt className="text-xs text-muted-foreground">{outgoing ? 'Still to pay' : 'Balance due'}</dt><dd className={`font-heading text-lg font-semibold ${due > 0 ? 'text-warning' : 'text-success'}`}>{inr(Math.max(due, 0))}</dd></div>
+        </dl>
+        {payments.length > 0 && (
+          <ul className="divide-y rounded-lg border text-sm">
+            {payments.map((p) => (
+              <li key={p.id} className="flex flex-wrap items-center gap-3 py-1.5 pr-1.5 pl-3">
+                <span className="w-24 text-muted-foreground">{formatDate(p.date)}</span>
+                <span className="w-24 font-medium tabular-nums">{inr(p.amount)}</span>
+                <span className="text-muted-foreground">{METHODS[p.method]}{p.reference ? `, ${p.reference}` : ''}</span>
+                <span className="ml-auto"><DeleteButton action={deletePayment.bind(null, p.id)} label="payment" compact /></span>
+              </li>
+            ))}
+          </ul>
+        )}
+        {cancelled ? <p className="text-sm text-muted-foreground">Cancelled documents owe nothing.</p> : due > 0 ? <PaymentForm invoiceId={invoiceId} due={due} /> : <p className="text-sm font-medium text-success">Fully paid.</p>}
+      </CardContent>
+    </Card>
   )
 }

@@ -3,7 +3,9 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { KINDS, type Kind } from '@/lib/documents'
 import type { Customer, Invoice, InvoiceItem, Product, Settings } from '@/lib/types'
-import { IconArrowLeft } from '@/components/icons'
+import { ArrowLeft } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/page-header'
 import { DocumentEditor } from './editor'
 
 export async function EditDocumentPage({ kind, id }: { kind: Kind; id: string }) {
@@ -17,12 +19,12 @@ export async function EditDocumentPage({ kind, id }: { kind: Kind; id: string })
   ])
   if (!doc || doc.kind !== kind || !parties || !products) notFound()
 
-  const back = <Link href={`${cfg.path}/${doc.id}`} className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-ink"><IconArrowLeft /> Back to {doc.number}</Link>
+  const back = <Button asChild variant="ghost" className="-ml-3 mb-2 text-muted-foreground"><Link href={`${cfg.path}/${doc.id}`}><ArrowLeft /> Back to {doc.number}</Link></Button>
   if (doc.cancelled_at) {
     return (
       <>
         {back}
-        <p className="mt-4 rounded-lg border border-line bg-paper p-6">{doc.number} is cancelled, so it can no longer be edited. Make a new {cfg.label.toLowerCase()} instead.</p>
+        <p className="rounded-xl border p-6">{doc.number} is cancelled, so it can no longer be edited. Make a new {cfg.label.toLowerCase()} instead.</p>
       </>
     )
   }
@@ -30,8 +32,7 @@ export async function EditDocumentPage({ kind, id }: { kind: Kind; id: string })
   return (
     <>
       {back}
-      <h1 className="mb-1 mt-2 text-2xl font-semibold">Edit {doc.number}</h1>
-      <p className="mb-5 text-sm text-ink-soft">The number, share link and recorded payments stay the same. Everything else can change.</p>
+      <PageHeader title={`Edit ${doc.number}`} hint="The number, share link and recorded payments stay the same. Everything else can change." />
       <DocumentEditor
         kind={kind}
         parties={parties.filter((p) => !p.hidden || p.id === (doc.customer_id ?? doc.vendor_id))}

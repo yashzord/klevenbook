@@ -1,35 +1,123 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-/* Brand tokens sampled from the Kleven Care logo. Buttons and links use darker cousins that pass WCAG AA (4.5:1) with white. */
-@theme {
-  --color-ink: #0f2a52;        /* navy wordmark */
-  --color-ink-soft: #4a5b74;   /* secondary text, hints, table headings */
-  --color-brand: #1f73a8;      /* links: logo blue darkened to 5.2:1 on white */
-  --color-brand-deep: #0f4787; /* document numbers, selected tab text */
-  --color-leaf: #268043;       /* primary buttons: 4.9:1 with white text */
-  --color-leaf-deep: #1f7039;  /* hover, and green text on white at 6.1:1 */
-  --color-leaf-bright: #43ba66; /* the logo green itself, decorative only */
-  --color-whatsapp: #25d366;   /* official WhatsApp green, used with dark text */
-  --color-canvas: #f5f8fb;     /* page background behind the panels */
-  --color-paper: #ffffff;      /* panels, inputs, the printed page */
-  --color-tint: #eef4fa;       /* table heads, quiet fills */
-  --color-line: #d6e0ec;       /* every border and divider */
+/*
+ * KlevenBook theme for shadcn/ui (style: radix-vega).
+ * Colors come from the Kleven Care logo. Light only: documents print.
+ * The design-system page reads this block, so keep one token per line with its note.
+ */
+:root {
+  --radius: 0.625rem;
+  --background: #ffffff;           /* page and printed paper */
+  --foreground: #0f2a52;           /* navy from the wordmark: all text */
+  --card: #ffffff;                 /* panels */
+  --card-foreground: #0f2a52;
+  --popover: #ffffff;              /* menus, calendar, dialogs */
+  --popover-foreground: #0f2a52;
+  --primary: #0f4787;              /* Kleven blue: the main action, links, document numbers */
+  --primary-foreground: #ffffff;
+  --secondary: #eaf1f8;            /* quiet buttons and chips */
+  --secondary-foreground: #0f2a52;
+  --muted: #f1f5fa;                /* table heads, hover rows, skeletons */
+  --muted-foreground: #4a5b74;     /* secondary text and hints */
+  --accent: #e4edf7;               /* hover and selected fills */
+  --accent-foreground: #0f2a52;
+  --destructive: #b42318;          /* errors, cancel, delete, overdue */
+  --success: #1f7039;              /* leaf green, darkened: paid, saved, done */
+  --success-foreground: #ffffff;
+  --warning: #8a4b0f;              /* needs a look: part paid, missing HSN, odd date */
+  --border: #dbe4ee;               /* dividers and panel edges */
+  --input: #c3d0e0;                /* field outlines */
+  --ring: #1f73a8;                 /* focus ring: the logo blue */
+  --brand-green: #43ba66;          /* the logo green itself: decoration only, never behind text */
+  --whatsapp: #25d366;             /* Send on WhatsApp button, with navy text */
+  --chart-1: #0f4787;
+  --chart-2: #1f73a8;
+  --chart-3: #43ba66;
+  --chart-4: #8a4b0f;
+  --chart-5: #4a5b74;
+  --sidebar: #f4f7fb;              /* navigation rail and the backdrop around the page */
+  --sidebar-foreground: #0f2a52;
+  --sidebar-primary: #0f4787;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e4edf7;
+  --sidebar-accent-foreground: #0f2a52;
+  --sidebar-border: #dbe4ee;
+  --sidebar-ring: #1f73a8;
+}
+
+@theme inline {
   --font-sans: var(--font-plex), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-plex), ui-sans-serif, system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-brand-green: var(--brand-green);
+  --color-whatsapp: var(--whatsapp);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-body {
-  background: var(--color-canvas);
-  color: var(--color-ink);
-  font-feature-settings: "tnum" 1; /* tabular numerals: money columns line up */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "tnum" 1; /* tabular numerals: money columns line up */
+  }
+  button:not(:disabled), summary, [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  a:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
 }
 
-/* Tailwind 4 no longer gives buttons a pointer. */
-button, summary, [role="button"] { cursor: pointer; }
-button:disabled { cursor: wait; }
-
-:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
-
-.rule-brand { height: 4px; background: linear-gradient(90deg, var(--color-brand-deep), var(--color-brand) 45%, var(--color-leaf-bright)); }
+/* The brand rule: the logo's blue-to-green sweep, 4px. Top of the app and under every letterhead. */
+.rule-brand { height: 4px; background: linear-gradient(90deg, var(--primary), var(--ring) 45%, var(--brand-green)); }
 
 @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 
@@ -39,7 +127,8 @@ button:disabled { cursor: wait; }
 
 @media print {
   @page { size: A4; margin: 14mm; }
-  .no-print { display: none !important; }
+  .no-print, [data-slot="sidebar"], [data-slot="sidebar-gap"], [data-slot="sidebar-container"] { display: none !important; }
+  [data-slot="sidebar-wrapper"], [data-slot="sidebar-inset"] { display: block !important; margin: 0 !important; min-height: 0 !important; background: white !important; box-shadow: none !important; border-radius: 0 !important; }
   body { background: white; }
   .rule-brand { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }

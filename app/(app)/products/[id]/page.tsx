@@ -1,10 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { IconArrowLeft } from '@/components/icons'
 import { notFound } from 'next/navigation'
+import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import type { Product } from '@/lib/types'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { DeleteButton } from '@/components/delete-button'
+import { PageHeader } from '@/components/page-header'
 import { ProductForm } from '../product-form'
 import { deleteProduct } from '../actions'
 
@@ -16,11 +19,11 @@ export default async function EditProductPage({ params }: PageProps<'/products/[
   if (!product) notFound()
   return (
     <>
-      <Link href="/products" className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-ink"><IconArrowLeft /> All products</Link>
-      <h1 className="mb-1 mt-2 text-2xl font-semibold">{product.name}</h1>
-      <p className="mb-5 text-sm text-ink-soft">Changes apply to new documents only. Documents already made keep the old price.</p>
-      <ProductForm product={product} />
-      <div className="mt-4"><DeleteButton action={deleteProduct.bind(null, product.id)} label="product" /></div>
+      <Button asChild variant="ghost" className="-ml-3 mb-2 text-muted-foreground"><Link href="/products"><ArrowLeft /> All products</Link></Button>
+      <PageHeader title={product.name} hint="Changes apply to new documents only. Documents already made keep the old price.">
+        <DeleteButton action={deleteProduct.bind(null, product.id)} label="product" />
+      </PageHeader>
+      <Card><CardContent><ProductForm product={product} /></CardContent></Card>
     </>
   )
 }

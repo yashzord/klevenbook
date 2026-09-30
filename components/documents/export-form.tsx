@@ -1,14 +1,19 @@
+import { Download } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { DatePicker } from '@/components/date-picker'
+
 // Plain GET form: the browser downloads the CSV the route handler returns.
 export function ExportForm({ kind }: { kind: 'invoice' | 'purchase' }) {
   const today = new Date()
-  const first = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10)
-  const cls = 'rounded-md border border-line bg-paper px-2 py-1.5 text-sm'
+  const first = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`
   return (
-    <form action="/api/export/invoices" method="get" className="flex items-center gap-2 text-sm">
+    <form action="/api/export/invoices" method="get" className="no-print mb-4 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
       <input type="hidden" name="kind" value={kind} />
-      <label className="text-ink-soft">From <input type="date" name="from" defaultValue={first} required className={cls} /></label>
-      <label className="text-ink-soft">to <input type="date" name="to" defaultValue={today.toISOString().slice(0, 10)} required className={cls} /></label>
-      <button className="rounded-md border border-line bg-paper px-3 py-1.5 font-medium text-brand-deep hover:bg-tint">Download CSV</button>
+      <span>Export from</span>
+      <span className="w-36"><DatePicker name="from" defaultValue={first} quiet /></span>
+      <span>to</span>
+      <span className="w-36"><DatePicker name="to" defaultValue={today.toISOString().slice(0, 10)} quiet /></span>
+      <Button type="submit" variant="outline"><Download /> Download CSV</Button>
     </form>
   )
 }

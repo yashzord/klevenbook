@@ -1,20 +1,32 @@
 'use client'
-import { useActionState, useState } from 'react'
-import { FormError, SubmitButton, inputClass } from '@/components/form'
+import { useActionState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Field, FormError, SubmitButton } from '@/components/form'
 import { cancelDocument } from './actions'
 
 export function CancelForm({ id, label }: { id: string; label: string }) {
-  const [open, setOpen] = useState(false)
   const [state, action] = useActionState(cancelDocument.bind(null, id), {})
-  if (!open) {
-    return <button type="button" onClick={() => setOpen(true)} className="min-h-11 rounded-md px-3 py-2 text-sm text-ink-soft transition hover:bg-red-50 hover:text-red-700">Cancel this {label}</button>
-  }
   return (
-    <form action={action} className="flex flex-wrap items-center gap-2 rounded-md border border-red-200 bg-red-50 p-2 text-sm">
-      <input name="reason" required autoFocus placeholder="Reason, e.g. wrong quantity" className={`${inputClass} w-64`} />
-      <SubmitButton pendingText="Cancelling" className="!bg-red-700 hover:!bg-red-800">Confirm cancel</SubmitButton>
-      <button type="button" onClick={() => setOpen(false)} className="px-2 text-ink-soft">Keep it</button>
-      <FormError message={state.error} />
-    </form>
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button type="button" variant="ghost" className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive">Cancel this {label}</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <form action={action} className="grid gap-4">
+          <DialogHeader>
+            <DialogTitle>Cancel this {label}?</DialogTitle>
+            <DialogDescription>It keeps its number and stays in the list with a Cancelled stamp. This cannot be undone.</DialogDescription>
+          </DialogHeader>
+          <Field label="Reason" hint="Printed on the cancelled document."><Input name="reason" required autoFocus placeholder="Wrong quantity, reissued" /></Field>
+          <FormError message={state.error} />
+          <DialogFooter>
+            <DialogClose asChild><Button type="button" variant="outline">Keep it</Button></DialogClose>
+            <SubmitButton pendingText="Cancelling" variant="destructive">Cancel {label}</SubmitButton>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }

@@ -9,9 +9,8 @@ export function payStatus(total: number | string, paid: number, cancelled: boole
 }
 
 export const STATUS_LABEL: Record<PayStatus, string> = { paid: 'Paid', part: 'Part paid', unpaid: 'Unpaid', cancelled: 'Cancelled' }
-export const STATUS_CLASS: Record<PayStatus, string> = {
-  paid: 'bg-leaf/15 text-leaf-deep', part: 'bg-amber-100 text-amber-800', unpaid: 'bg-tint text-brand-deep', cancelled: 'bg-red-50 text-red-700',
-}
+// Badge variants from components/ui/badge.tsx.
+export const STATUS_VARIANT = { paid: 'success', part: 'warning', unpaid: 'secondary', cancelled: 'destructive' } as const satisfies Record<PayStatus, string>
 
 export const sumPaid = (payments: { amount: string | number }[] | null | undefined) =>
   Math.round((payments ?? []).reduce((s, p) => s + Number(p.amount), 0) * 100) / 100

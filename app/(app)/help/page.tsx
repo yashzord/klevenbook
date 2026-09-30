@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { PageHeader } from '@/components/page-header'
 
 const sections = [
   {
@@ -61,18 +63,19 @@ export const metadata: Metadata = { title: 'Help' }
 export default function HelpPage() {
   return (
     <>
-      <h1 className="mb-1 text-2xl font-semibold">How KlevenBook works</h1>
-      <p className="mb-6 text-sm text-ink-soft">Five minutes of reading covers everything. Start with the checklist on <Link href="/" className="text-brand hover:underline">Home</Link>. For how the app looks and why, see the <Link href="/design-system" className="text-brand hover:underline">design system</Link>.</p>
-      <div className="grid gap-6 md:grid-cols-2">
+      <PageHeader title="How KlevenBook works" hint={<>Five minutes of reading covers everything. Start with the checklist on <Link href="/" className="text-primary underline-offset-4 hover:underline">Home</Link>. For how the app looks and why, see the <Link href="/design-system" className="text-primary underline-offset-4 hover:underline">design system</Link>.</>} />
+      <div className="grid gap-4 md:grid-cols-2">
         {sections.map((s) => (
-          <section key={s.title} className="rounded-lg border border-line bg-paper p-5">
-            <h2 className="mb-3 font-semibold">{s.title}</h2>
-            <dl className="space-y-3 text-sm">
-              {s.body.map(([term, text]) => (
-                <div key={term}><dt className="font-medium">{term}</dt><dd className="text-ink-soft">{text}</dd></div>
-              ))}
-            </dl>
-          </section>
+          <Card key={s.title}>
+            <CardHeader><CardTitle>{s.title}</CardTitle></CardHeader>
+            <CardContent>
+              <dl className="space-y-4">
+                {s.body.map(([term, text]) => (
+                  <div key={term}><dt className="font-medium">{term}</dt><dd className="mt-0.5 text-muted-foreground">{text}</dd></div>
+                ))}
+              </dl>
+            </CardContent>
+          </Card>
         ))}
       </div>
     </>

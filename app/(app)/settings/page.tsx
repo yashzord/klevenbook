@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import type { Sequence, Settings } from '@/lib/types'
+import { PageHeader } from '@/components/page-header'
 import { SettingsForm } from './settings-form'
 
 export const metadata: Metadata = { title: 'Settings' }
@@ -13,8 +14,7 @@ export default async function SettingsPage() {
   if (!settings || !sequences) throw new Error('Settings row missing')
   return (
     <>
-      <h1 className="mb-1 text-2xl font-semibold">Settings</h1>
-      <p className="mb-5 text-sm text-ink-soft">What prints on your documents and how they are numbered.</p>
+      <PageHeader title="Settings" hint="What prints on your documents and how they are numbered." />
       <SettingsForm settings={settings} sequences={sequences} />
     </>
   )

@@ -10,10 +10,12 @@ export default async function UpdatePasswordPage() {
   const { data } = await supabase.auth.getClaims()
   if (!data?.claims) redirect('/login/forgot?expired=1') // only reachable from a valid reset link
   return (
-    <main className="mx-auto w-full max-w-sm px-6 pt-20">
-      <h1 className="text-2xl font-semibold">Choose a new password</h1>
-      <p className="mb-6 mt-1 text-sm text-ink-soft">At least 8 characters. You stay signed in afterwards.</p>
+    <main className="flex min-h-screen items-center justify-center bg-sidebar p-6">
+      <div className="w-full max-w-sm rounded-xl bg-card p-6 shadow-xs ring-1 ring-foreground/10 sm:p-8">
+      <h1 className="font-heading text-2xl font-semibold tracking-tight">Choose a new password</h1>
+      <p className="mb-6 mt-1 text-sm text-muted-foreground">At least 8 characters. You stay signed in afterwards.</p>
       <UpdateForm />
+      </div>
     </main>
   )
 }

@@ -2,7 +2,7 @@
 
 Invoicing for small Indian medical distributors. GST-ready tax invoices, quotations, delivery challans, purchase bills, payments in and out, WhatsApp sharing, products, customers, vendors, and CSV exports for GST filing. Open source (MIT).
 
-Built with Next.js 16, Supabase, Tailwind. Deployed on Vercel at book.klevencare.com.
+Built with Next.js 16, Supabase, Tailwind 4 and shadcn/ui. Deployed on Vercel at book.klevencare.com.
 
 ## Design system
 

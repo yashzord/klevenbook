@@ -1,38 +1,41 @@
 'use client'
 import { useFormStatus } from 'react-dom'
+import { CircleAlert, CircleCheck } from 'lucide-react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Spinner } from '@/components/ui/spinner'
+import { cn } from '@/lib/utils'
 
-export const inputClass =
-  'min-h-11 w-full rounded-md border border-line bg-paper px-3 py-2 text-ink outline-none transition placeholder:text-ink-soft/60 focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:opacity-60'
-
-export function Field({ label, hint, children, className = '' }: { label: string; hint?: string; children: React.ReactNode; className?: string }) {
+// Label above, control, hint below. The <label> wraps the control, so no ids are needed.
+export function Field({ label, hint, children, className }: { label: string; hint?: string; children: React.ReactNode; className?: string }) {
   return (
-    <label className={`block text-sm ${className}`}>
-      <span className="mb-1 block font-medium text-ink">{label}</span>
-      {children}
-      {hint && <span className="mt-1 block text-xs text-ink-soft">{hint}</span>}
-    </label>
+    <div className={cn('flex flex-col gap-1.5', className)}>
+      <label className="flex flex-col gap-1.5">
+        <span className="text-sm leading-snug font-medium">{label}</span>
+        {children}
+      </label>
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+    </div>
   )
 }
 
-export function SubmitButton({ children, pendingText, className = '' }: { children: React.ReactNode; pendingText: string; className?: string }) {
+// Submit button that shows a spinner and a waiting word while its form's server action runs.
+export function SubmitButton({ children, pendingText, className, variant, size }: { children: React.ReactNode; pendingText: string; className?: string } & Pick<React.ComponentProps<typeof Button>, 'variant' | 'size'>) {
   const { pending } = useFormStatus()
   return (
-    <button
-      disabled={pending}
-      className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-leaf px-4 py-2 font-medium text-white transition hover:bg-leaf-deep active:scale-[0.99] disabled:cursor-wait disabled:opacity-70 ${className}`}
-    >
-      {pending && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden />}
+    <Button type="submit" disabled={pending} variant={variant} size={size} className={className}>
+      {pending && <Spinner />}
       {pending ? pendingText : children}
-    </button>
+    </Button>
   )
 }
 
 export function FormError({ message }: { message?: string }) {
   if (!message) return null
-  return <p role="alert" className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{message}</p>
+  return <Alert variant="destructive" role="alert"><CircleAlert /><AlertDescription>{message}</AlertDescription></Alert>
 }
 
 export function FormSuccess({ message }: { message?: string }) {
   if (!message) return null
-  return <p role="status" className="rounded-md border border-leaf/40 bg-leaf/10 px-3 py-2 text-sm text-leaf-deep">{message}</p>
+  return <Alert variant="success" role="status"><CircleCheck /><AlertDescription>{message}</AlertDescription></Alert>
 }
