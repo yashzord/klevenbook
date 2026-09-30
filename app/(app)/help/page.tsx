@@ -62,7 +62,7 @@ export default function HelpPage() {
   return (
     <>
       <h1 className="mb-1 text-2xl font-semibold">How KlevenBook works</h1>
-      <p className="mb-6 text-sm text-ink-soft">Five minutes of reading covers everything. Start with the checklist on <Link href="/" className="text-brand hover:underline">Home</Link>.</p>
+      <p className="mb-6 text-sm text-ink-soft">Five minutes of reading covers everything. Start with the checklist on <Link href="/" className="text-brand hover:underline">Home</Link>. For how the app looks and why, see the <Link href="/design-system" className="text-brand hover:underline">design system</Link>.</p>
       <div className="grid gap-6 md:grid-cols-2">
         {sections.map((s) => (
           <section key={s.title} className="rounded-lg border border-line bg-paper p-5">

@@ -3,21 +3,22 @@
 /* Brand tokens sampled from the Kleven Care logo. Buttons and links use darker cousins that pass WCAG AA (4.5:1) with white. */
 @theme {
   --color-ink: #0f2a52;        /* navy wordmark */
-  --color-ink-soft: #4a5b74;
+  --color-ink-soft: #4a5b74;   /* secondary text, hints, table headings */
   --color-brand: #1f73a8;      /* links: logo blue darkened to 5.2:1 on white */
-  --color-brand-deep: #0f4787;
+  --color-brand-deep: #0f4787; /* document numbers, selected tab text */
   --color-leaf: #268043;       /* primary buttons: 4.9:1 with white text */
   --color-leaf-deep: #1f7039;  /* hover, and green text on white at 6.1:1 */
   --color-leaf-bright: #43ba66; /* the logo green itself, decorative only */
   --color-whatsapp: #25d366;   /* official WhatsApp green, used with dark text */
-  --color-paper: #ffffff;
+  --color-canvas: #f5f8fb;     /* page background behind the panels */
+  --color-paper: #ffffff;      /* panels, inputs, the printed page */
   --color-tint: #eef4fa;       /* table heads, quiet fills */
-  --color-line: #d6e0ec;
+  --color-line: #d6e0ec;       /* every border and divider */
   --font-sans: var(--font-plex), ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
-  background: #f5f8fb;
+  background: var(--color-canvas);
   color: var(--color-ink);
   font-feature-settings: "tnum" 1; /* tabular numerals: money columns line up */
 }

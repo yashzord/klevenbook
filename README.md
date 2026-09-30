@@ -4,6 +4,10 @@ Invoicing for small Indian medical distributors. GST-ready tax invoices, quotati
 
 Built with Next.js 16, Supabase, Tailwind. Deployed on Vercel at book.klevencare.com.
 
+## Design system
+
+Colors, type, components, patterns and the rules for printed documents are documented as a live page at `/design-system` ([book.klevencare.com/design-system](https://book.klevencare.com/design-system)). It reads its colors from `app/globals.css` and renders the real components, so it stays in step with the code.
+
 ## Run locally
 
 Needs Node 24 and Docker.
