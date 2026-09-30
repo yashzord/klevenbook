@@ -2,7 +2,7 @@ import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { KINDS, PAYABLE, type Kind } from '@/lib/documents'
-import type { Customer, Invoice, InvoiceItem, Payment, Settings } from '@/lib/types'
+import type { Customer, Invoice, InvoiceItem, Payment, Settings, Vendor } from '@/lib/types'
 import { DocumentView, type CopyKind } from './view'
 import { PaymentsPanel } from './payments'
 
@@ -13,7 +13,7 @@ export async function DocumentPage({ kind, id, copy }: { kind: Kind; id: string;
   const [{ data: doc }, { data: settings }, { data: payments }] = await Promise.all([
     // source:source_id(...) follows the self-referencing FK to the quotation or invoice this came from.
     supabase.from('invoices').select('*, customers(*), vendors(*), invoice_items(*), source:source_id(number, kind)').eq('id', id)
-      .single<Invoice & { share_token: string; customers: Customer | null; vendors: Customer | null; invoice_items: InvoiceItem[]; source: { number: string; kind: Kind } | null }>(),
+      .single<Invoice & { share_token: string; customers: Customer | null; vendors: Vendor | null; invoice_items: InvoiceItem[]; source: { number: string; kind: Kind } | null }>(),
     supabase.from('settings').select('*').single<Settings>(),
     PAYABLE.includes(kind) ? supabase.from('payments').select('*').eq('invoice_id', id).order('date').returns<Payment[]>() : Promise.resolve({ data: null }),
   ])

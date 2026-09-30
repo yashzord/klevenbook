@@ -11,7 +11,8 @@ const MAX_ROWS = 100
 const r2 = (n: number) => Math.round(n * 100) / 100
 
 // The browser shows live totals for convenience; everything is recomputed here from prices in the database.
-export async function createDocument(_prev: ActionState, formData: FormData): Promise<ActionState> {
+// Shared by create and edit, so both apply exactly the same rules.
+async function readDocument(formData: FormData) {
   const kind = String(formData.get('kind') ?? '')
   if (!isKind(kind)) return { error: 'Unknown document type.' }
   const cfg = KINDS[kind]
@@ -75,9 +76,25 @@ export async function createDocument(_prev: ActionState, formData: FormData): Pr
     source_id,
   }
 
-  const { data: id, error } = await supabase.rpc('create_invoice', { inv, items })
+  return { supabase, cfg, inv, items }
+}
+
+export async function createDocument(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const r = await readDocument(formData)
+  if ('error' in r) return r
+  const { data: id, error } = await r.supabase.rpc('create_invoice', { inv: r.inv, items: r.items })
   if (error) return { error: `Could not save: ${error.message}` }
-  redirect(`${cfg.path}/${id}`)
+  redirect(`${r.cfg.path}/${id}`)
+}
+
+// Same number, same share link, same payments; lines and header are replaced.
+export async function updateDocument(id: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  const r = await readDocument(formData)
+  if ('error' in r) return r
+  const { error } = await r.supabase.rpc('update_document', { doc_id: id, inv: r.inv, items: r.items })
+  if (error) return { error: error.message.includes('cancelled') ? 'This document is cancelled, so it can no longer be edited.' : `Could not save: ${error.message}` }
+  revalidatePath('/', 'layout')
+  redirect(`${r.cfg.path}/${id}`)
 }
 
 export async function cancelDocument(id: string, _prev: ActionState, formData: FormData): Promise<ActionState> {

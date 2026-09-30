@@ -6,7 +6,7 @@ const sections = [
     title: 'The three documents',
     body: [
       ['Quotation', 'A price offer you send before the customer orders. Nothing is owed yet. When they say yes, open the quotation and press "Make invoice from this quotation". The lines copy across.'],
-      ['Invoice', 'The tax document for a sale. Each line carries its own GST rate. If the customer is in Telangana the tax splits into CGST and SGST; anywhere else it is IGST. This is worked out from the customer\'s GSTIN, so keep GSTINs correct.'],
+      ['Invoice', 'The tax document for a sale. Each line carries its own GST rate, charged as IGST. Keep customer GSTINs correct: they print on every invoice.'],
       ['Delivery challan', 'Travels with the goods. It lists quantities and batch or serial numbers but no prices. Open the invoice and press "Make delivery challan" so the lines match.'],
     ],
   },
@@ -15,7 +15,8 @@ const sections = [
     body: [
       ['Serial numbers', 'Every document gets the next number in its series, for example KC-INV-2026-0007. GST rules want these consecutive, so documents cannot be deleted.'],
       ['Forgot your password', 'On the sign-in page press Forgot your password. A link arrives by email, works once, and lets you set a new one.'],
-      ['Made a mistake?', 'Open the document and press "Cancel this …". It keeps its number, gets a red Cancelled stamp with your reason, and stays in the list. Then make a fresh one.'],
+      ['Made a mistake?', 'Open the document and press Edit. Change anything and save; the number, share link and payments stay the same.'],
+      ['Cancelling', 'If a document should not exist at all, press "Cancel this …". It keeps its number, gets a red Cancelled stamp with your reason, and stays in the list.'],
       ['New financial year', 'In Settings, change each prefix (for example KC-INV-2027-) and set Next back to 1.'],
     ],
   },
@@ -24,14 +25,14 @@ const sections = [
     body: [
       ['Getting paid from the PDF', 'Fill in your bank and UPI details in Settings once. Every invoice then prints a How to pay box and a Pay by date.'],
       ['Record a payment', 'Open the invoice. Below it, enter the amount received, the date and how it was paid. Part payments are fine; add each one as it comes.'],
-      ['Who owes you', 'Home lists open invoices with the balance due, oldest first. The Invoices list shows Paid, Part paid or Unpaid on every row.'],
+      ['Who owes you', 'The Outstanding page lists every customer who owes you, with each unpaid invoice underneath. Switch to Vendors to see what you owe. It prints.'],
       ['Wrong entry', 'Remove the payment from the invoice page and add it again. Payments have no serial number, so this is safe.'],
     ],
   },
   {
     title: 'Buying from vendors',
     body: [
-      ['Vendors', 'Who you buy from, with their GSTIN. Same form as customers.'],
+      ['Vendors', 'Who you buy from, with their GSTIN and bank details, so paying them needs no second lookup.'],
       ['Purchase bills', 'When a vendor bill arrives, enter it under Purchases with the vendor\'s own bill number and the rates on their bill. Nothing prefills, because your list price is a selling price.'],
       ['Paying vendors', 'Record what you paid on the bill, the same way as customer payments. Home shows what you still owe.'],
       ['For your CA', 'On the Purchases page, download the CSV for the month. It is the input tax credit side of GST.'],

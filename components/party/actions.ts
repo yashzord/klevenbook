@@ -26,6 +26,13 @@ function read(table: PartyTable, formData: FormData) {
       state_code,
       phone: String(formData.get('phone') ?? '').trim() || null,
       address: String(formData.get('address') ?? '').trim() || null,
+      // Only vendors carry bank details: that is who Kleven Care pays.
+      ...(table === 'vendors' && {
+        bank_name: String(formData.get('bank_name') ?? '').trim() || null,
+        bank_account: String(formData.get('bank_account') ?? '').trim() || null,
+        bank_ifsc: String(formData.get('bank_ifsc') ?? '').trim().toUpperCase() || null,
+        upi_id: String(formData.get('upi_id') ?? '').trim() || null,
+      }),
     },
   }
 }

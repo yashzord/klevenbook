@@ -1,17 +1,17 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { IconArrowLeft } from '@/components/icons'
-import { inr } from '@/lib/gst'
+import { amount, inr } from '@/lib/gst'
 import { formatDate } from '@/lib/format'
 import { STATES } from '@/lib/states'
 import { numberToWords, rupeesInWords } from '@/lib/words'
 import { KINDS, type Kind } from '@/lib/documents'
-import type { Customer, Invoice, InvoiceItem, Settings } from '@/lib/types'
+import type { Customer, Invoice, InvoiceItem, Settings, Vendor } from '@/lib/types'
 import { PrintButton } from './print-button'
 import { CancelForm } from './cancel-form'
 import { ShareButtons } from './share-buttons'
 
-type Doc = Invoice & { customers: Customer | null; vendors?: Customer | null; invoice_items: InvoiceItem[]; source: { number: string; kind: Kind } | null }
+type Doc = Invoice & { customers: Customer | null; vendors?: Vendor | null; invoice_items: InvoiceItem[]; source: { number: string; kind: Kind } | null }
 
 // Layout follows the Kleven Care letterhead and templates. Invoice fields per CGST Rule 46: https://cbic-gst.gov.in/cgst-rules.html
 export type CopyKind = 'original' | 'duplicate' | 'triplicate'
@@ -31,6 +31,7 @@ export function DocumentView({ doc, settings, shareUrl, copy = 'original' }: { d
       <div className="no-print mb-4 flex flex-wrap items-center justify-between gap-3">
         {shareUrl ? <Link href={cfg.path} className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-ink"><IconArrowLeft /> All {cfg.plural.toLowerCase()}</Link> : <span />}
         <div className="flex flex-wrap items-center gap-2">
+          {shareUrl && !doc.cancelled_at && <Link href={`${cfg.path}/${doc.id}/edit`} className="inline-flex min-h-11 items-center rounded-md border border-line bg-paper px-4 py-2 font-medium text-brand-deep transition hover:bg-tint">Edit</Link>}
           {shareUrl && !doc.cancelled_at && <CancelForm id={doc.id} label={cfg.label.toLowerCase()} />}
           {shareUrl && next && !doc.cancelled_at && <Link href={next.href} className="inline-flex min-h-11 items-center rounded-md border border-line bg-paper px-4 py-2 font-medium text-brand-deep transition hover:bg-tint">{next.label}</Link>}
           {shareUrl && kind === 'invoice' && (
@@ -97,21 +98,22 @@ export function DocumentView({ doc, settings, shareUrl, copy = 'original' }: { d
         <div className="mt-6 overflow-x-auto"><table className="w-full text-sm tabular-nums">
           <thead className="border-b-2 border-ink text-left text-ink-soft">
             <tr>
-              <th className={th}>#</th><th className={th}>Description</th><th className={th}>HSN</th>
+              <th className={th}>S.No</th><th className={th}>Description</th><th className={th}>HSN/SAC</th>
               {kind === 'challan' && <th className={th}>Batch or serial</th>}
               <th className={`${th} text-right`}>Qty</th>
-              {cfg.money && <><th className={`${th} text-right`}>Rate</th><th className={`${th} text-right`}>Taxable</th><th className={`${th} text-right`}>GST</th><th className={`${th} text-right`}>Tax</th></>}
+              {cfg.money && <><th className={`${th} text-right`}>Unit price</th><th className={`${th} text-right`}>{intra ? 'CGST + SGST' : 'IGST'}</th><th className={`${th} text-right`}>Total</th></>}
             </tr>
           </thead>
           <tbody>
             {doc.invoice_items.map((it, i) => (
               <tr key={it.id} className="border-b border-line">
-                <td className={`${td} text-ink-soft`}>{i + 1}</td><td className={td}>{it.description}</td><td className={td}>{it.hsn}</td>
+                <td className={`${td} text-ink-soft`}>{i + 1}</td><td className="min-w-40 px-2 py-2">{it.description}</td><td className={td}>{it.hsn}</td>
                 {kind === 'challan' && <td className={td}>{it.batch}</td>}
                 <td className={`${td} text-right`}>{Number(it.qty)} {it.unit}</td>
                 {cfg.money && <>
-                  <td className={`${td} text-right`}>{inr(it.rate)}</td><td className={`${td} text-right`}>{inr(it.amount)}</td>
-                  <td className={`${td} text-right`}>{Number(it.gst_rate)}%</td><td className={`${td} text-right`}>{inr(it.tax)}</td>
+                  <td className={`${td} text-right`}>{amount(it.rate)}</td>
+                  <td className={`${td} text-right`}>{amount(it.tax)}<span className="block text-xs text-ink-soft">{Number(it.gst_rate)}%</span></td>
+                  <td className={`${td} text-right font-medium`}>{amount(Number(it.amount) + Number(it.tax))}</td>
                 </>}
               </tr>
             ))}
@@ -127,16 +129,16 @@ export function DocumentView({ doc, settings, shareUrl, copy = 'original' }: { d
           <dl className="w-full space-y-1 text-sm tabular-nums sm:w-60">
             {cfg.money ? (
               <>
-                <div className="flex justify-between"><dt className="text-ink-soft">Taxable value</dt><dd>{inr(doc.subtotal)}</dd></div>
+                <div className="flex justify-between"><dt className="text-ink-soft">Taxable value</dt><dd>{amount(doc.subtotal)}</dd></div>
                 {intra ? (
                   <>
-                    <div className="flex justify-between"><dt className="text-ink-soft">CGST</dt><dd>{inr(doc.cgst)}</dd></div>
-                    <div className="flex justify-between"><dt className="text-ink-soft">SGST</dt><dd>{inr(doc.sgst)}</dd></div>
+                    <div className="flex justify-between"><dt className="text-ink-soft">CGST</dt><dd>{amount(doc.cgst)}</dd></div>
+                    <div className="flex justify-between"><dt className="text-ink-soft">SGST</dt><dd>{amount(doc.sgst)}</dd></div>
                   </>
                 ) : (
-                  <div className="flex justify-between"><dt className="text-ink-soft">IGST</dt><dd>{inr(doc.igst)}</dd></div>
+                  <div className="flex justify-between"><dt className="text-ink-soft">IGST</dt><dd>{amount(doc.igst)}</dd></div>
                 )}
-                <div className="flex justify-between border-t-2 border-ink pt-2 text-base font-semibold"><dt>Total</dt><dd>{inr(doc.total)}</dd></div>
+                <div className="flex justify-between border-t-2 border-ink pt-2 text-base font-semibold"><dt>Total</dt><dd>{amount(doc.total)}</dd></div>
               </>
             ) : (
               <>
@@ -147,17 +149,8 @@ export function DocumentView({ doc, settings, shareUrl, copy = 'original' }: { d
           </dl>
         </div>
 
-        {kind === 'invoice' && (settings.bank_name || settings.upi_id) && (
-          <section className="mt-8 rounded-md border border-line p-4 text-sm">
-            <p className="font-medium">How to pay</p>
-            <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-4 gap-y-0.5 text-ink-soft">
-              {settings.bank_name && <><dt>Bank</dt><dd className="text-ink">{settings.bank_name}</dd></>}
-              {settings.bank_account && <><dt>Account</dt><dd className="text-ink">{settings.bank_account}</dd></>}
-              {settings.bank_ifsc && <><dt>IFSC</dt><dd className="text-ink">{settings.bank_ifsc}</dd></>}
-              {settings.upi_id && <><dt>UPI</dt><dd className="text-ink">{settings.upi_id}</dd></>}
-            </dl>
-          </section>
-        )}
+        {(kind === 'invoice' || kind === 'quotation') && <BankDetails title={kind === 'invoice' ? 'How to pay' : 'Our bank details'} bank={settings} />}
+        {kind === 'purchase' && doc.vendors && <BankDetails title="Vendor's bank details" bank={doc.vendors} />}
         {kind === 'quotation' && settings.quotation_terms && (
           <section className="mt-8 text-sm"><p className="font-medium">Terms and conditions</p><p className="mt-1 whitespace-pre-line text-ink-soft">{settings.quotation_terms}</p></section>
         )}
@@ -176,11 +169,10 @@ export function DocumentView({ doc, settings, shareUrl, copy = 'original' }: { d
               <p className="mt-6 border-t border-ink pt-1 text-ink-soft">Signature and stamp</p>
             </div>
           )}
-          {kind === 'invoice' && <p className="text-ink-soft">Subject to Hyderabad jurisdiction. Thank you for your business.</p>}
           {kind === 'purchase' ? (
             <p className="text-ink-soft">Internal record of the vendor&apos;s bill {doc.reference}. Keep the original for input tax credit.</p>
           ) : (
-            <div className="text-right">
+            <div className="text-right sm:ml-auto">
               <p>For {settings.business_name}</p>
               <p className="mt-12 border-t border-ink pt-1 text-ink-soft">Authorised signatory</p>
             </div>
@@ -192,3 +184,20 @@ export function DocumentView({ doc, settings, shareUrl, copy = 'original' }: { d
 }
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+
+type Bank = { bank_name: string | null; bank_account: string | null; bank_ifsc: string | null; upi_id: string | null }
+
+function BankDetails({ title, bank }: { title: string; bank: Bank }) {
+  if (!bank.bank_name && !bank.bank_account && !bank.upi_id) return null
+  return (
+    <section className="mt-8 rounded-md border border-line p-4 text-sm">
+      <p className="font-medium">{title}</p>
+      <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-4 gap-y-0.5 text-ink-soft">
+        {bank.bank_name && <><dt>Bank</dt><dd className="text-ink">{bank.bank_name}</dd></>}
+        {bank.bank_account && <><dt>Account</dt><dd className="text-ink">{bank.bank_account}</dd></>}
+        {bank.bank_ifsc && <><dt>IFSC</dt><dd className="text-ink">{bank.bank_ifsc}</dd></>}
+        {bank.upi_id && <><dt>UPI</dt><dd className="text-ink">{bank.upi_id}</dd></>}
+      </dl>
+    </section>
+  )
+}

@@ -33,7 +33,7 @@ export default async function HomePage() {
   const steps = [
     { done: !!settings?.gstin && settings.business_name !== 'My Business', href: '/settings', title: 'Add your business details', why: 'Name, GSTIN and address print at the top of every document.' },
     { done: (products ?? 0) > 0, href: '/products', title: 'Add a product', why: 'Name, HSN code, GST rate and list price. You can change the price on any document.' },
-    { done: (customers ?? 0) > 0, href: '/customers', title: 'Add a customer', why: 'Their GSTIN decides whether the invoice carries CGST and SGST or IGST.' },
+    { done: (customers ?? 0) > 0, href: '/customers', title: 'Add a customer', why: 'Their name, address and GSTIN print on every invoice.' },
     { done: (invoices ?? 0) > 0, href: '/invoices/new', title: 'Make your first invoice', why: 'Pick the customer, add lines, and print or save it as a PDF.' },
     { done: (paymentsCount ?? 0) > 0, href: '/invoices', title: 'Record a payment', why: 'Open an invoice and enter what came in. Home then shows who still owes you.' },
   ]
@@ -74,7 +74,7 @@ export default async function HomePage() {
 
       {owed.length > 0 && (
         <section className="mb-8">
-          <div className="mb-2 flex items-baseline justify-between"><h2 className="font-semibold">Owed to you</h2><span className="text-sm tabular-nums text-amber-800">{inr(owedTotal)} across {owed.length} {owed.length === 1 ? 'invoice' : 'invoices'}</span></div>
+          <div className="mb-2 flex items-baseline justify-between gap-3"><h2 className="font-semibold">Owed to you</h2><span className="text-sm tabular-nums text-amber-800">{inr(owedTotal)} across {owed.length} {owed.length === 1 ? 'invoice' : 'invoices'} <Link href="/outstanding" className="ml-2 font-medium text-brand hover:underline">See all</Link></span></div>
           <div className="overflow-x-auto rounded-lg border border-line bg-paper">
             <table className="w-full text-sm">
               <tbody>
@@ -94,7 +94,7 @@ export default async function HomePage() {
 
       {owing.length > 0 && (
         <section className="mb-8">
-          <div className="mb-2 flex items-baseline justify-between"><h2 className="font-semibold">You owe vendors</h2><span className="text-sm tabular-nums text-ink-soft">{inr(owingTotal)} across {owing.length} {owing.length === 1 ? 'bill' : 'bills'}</span></div>
+          <div className="mb-2 flex items-baseline justify-between gap-3"><h2 className="font-semibold">You owe vendors</h2><span className="text-sm tabular-nums text-ink-soft">{inr(owingTotal)} across {owing.length} {owing.length === 1 ? 'bill' : 'bills'} <Link href="/outstanding?side=vendors" className="ml-2 font-medium text-brand hover:underline">See all</Link></span></div>
           <div className="overflow-x-auto rounded-lg border border-line bg-paper">
             <table className="w-full text-sm">
               <tbody>

@@ -5,7 +5,7 @@ import { NavLink } from './nav-link'
 import { MobileMenu } from './mobile-menu'
 
 const links = [
-  ['/', 'Home'], ['/invoices', 'Invoices'], ['/quotations', 'Quotations'], ['/challans', 'Challans'], ['/purchases', 'Purchases'],
+  ['/', 'Home'], ['/invoices', 'Invoices'], ['/quotations', 'Quotations'], ['/challans', 'Challans'], ['/purchases', 'Purchases'], ['/outstanding', 'Outstanding'],
   ['/products', 'Products'], ['/customers', 'Customers'], ['/vendors', 'Vendors'],
 ] as const
 const rightLinks = [['/help', 'Help'], ['/settings', 'Settings']] as const

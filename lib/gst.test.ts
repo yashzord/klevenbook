@@ -1,11 +1,22 @@
 // Run: node --test lib/gst.test.ts   (Node 24 strips types natively)
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { gstType, isValidGstin, lineTotals, splitTax, stateCodeFromGstin } from './gst.ts'
+import { amount, gstType, isValidGstin, lineTotals, splitTax, stateCodeFromGstin } from './gst.ts'
 
-test('same state is CGST+SGST, other state is IGST', () => {
-  assert.equal(gstType('36', '36'), 'cgst_sgst')
+test('IGST on everything while ALWAYS_IGST is on', () => {
+  assert.equal(gstType('36', '36'), 'igst')
   assert.equal(gstType('36', '27'), 'igst')
+})
+
+test('state rule when ALWAYS_IGST is off: same state is CGST+SGST, other state is IGST', () => {
+  assert.equal(gstType('36', '36', false), 'cgst_sgst')
+  assert.equal(gstType('36', '27', false), 'igst')
+})
+
+test('printed amounts have no rupee sign and Indian grouping', () => {
+  assert.equal(amount('74245.5'), '74,245.50')
+  assert.equal(amount(1850.5), '1,850.50')
+  assert.equal(amount(0), '0.00')
 })
 
 test('GSTIN format and state code', () => {

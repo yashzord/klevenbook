@@ -2,7 +2,13 @@
 // Inter-state supply is taxed as IGST. IGST Act 2017 s.7 and s.8: https://cbic-gst.gov.in/gst-acts.html
 export type GstType = 'cgst_sgst' | 'igst'
 
-export function gstType(sellerStateCode: string, buyerStateCode: string): GstType {
+// Owner's decision (30 Sept 2026): every document charges IGST, Telangana buyers included.
+// GST law puts intra-state sales under CGST + SGST (IGST Act s.8), so her CA should confirm this.
+// Set to false to go back to the state-based rule; nothing else needs to change.
+export const ALWAYS_IGST = true
+
+export function gstType(sellerStateCode: string, buyerStateCode: string, alwaysIgst = ALWAYS_IGST): GstType {
+  if (alwaysIgst) return 'igst'
   return sellerStateCode === buyerStateCode ? 'cgst_sgst' : 'igst'
 }
 
@@ -35,4 +41,9 @@ export function splitTax(tax: number, type: GstType) {
 
 export function inr(n: number | string) {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(Number(n))
+}
+
+// Printed documents show plain amounts (1,850.50), no rupee sign. Screens keep inr().
+export function amount(n: number | string) {
+  return new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(n))
 }

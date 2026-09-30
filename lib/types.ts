@@ -9,7 +9,10 @@ export type Settings = {
 }
 export type Product = { id: string; name: string; hsn: string | null; unit: string; price: string; gst_rate: string }
 export type Customer = { id: string; name: string; gstin: string | null; state_code: string; phone: string | null; address: string | null }
-export type Vendor = Customer
+export type Vendor = Customer & { bank_name: string | null; bank_account: string | null; bank_ifsc: string | null; upi_id: string | null }
+
+// Units offered on products. Nos is the usual count word on Indian invoices.
+export const UNITS = ['Nos', 'pcs', 'box', 'pack', 'set', 'kit', 'pair', 'strip', 'bottle', 'roll', 'kg', 'litre', 'metre'] as const
 export type Invoice = {
   id: string; kind: Kind; number: string; date: string; customer_id: string | null; vendor_id: string | null; gst_type: 'cgst_sgst' | 'igst'
   subtotal: string; cgst: string; sgst: string; igst: string; total: string; notes: string | null

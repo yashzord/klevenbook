@@ -15,7 +15,7 @@ function readProduct(formData: FormData) {
     row: {
       name,
       hsn: String(formData.get('hsn') ?? '').trim() || null,
-      unit: String(formData.get('unit') ?? '').trim() || 'pcs',
+      unit: String(formData.get('unit') ?? '').trim() || 'Nos',
       price,
       gst_rate,
     },
